@@ -345,7 +345,7 @@ function vClienteDetalhe(id){
   const ps=pedidosDe(id).sort((a,b)=>a.criado_em<b.criado_em?1:-1);
   const hist=DB.historico.filter(h=>h.cliente_id===c.id).sort((a,b)=>b.id-a.id);
   const abertos=ps.filter(p=>p.status!=='Entregue').length;
-  const linhas=ps.map(p=>'<tr><td>'+esc(p.item)+(p.observacao?'<br><span class="mut">'+esc(p.observacao)+'</span>':'')+'</td><td>'+esc(p.tamanho)+'</td><td>'+p.quantidade+'</td><td>'+badge(p.status)+'</td><td>'+dia(p.criado_em)+'</td><td>'+previsaoHTML(p,false)+'</td><td>'+fmt(p.entregue_em)+'</td>'+
+  const linhas=ps.map(p=>'<tr><td>'+esc(p.item)+(p.observacao?'<ul class="mut" style="margin:4px 0 0;padding-left:18px">'+p.observacao.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</td><td>'+esc(p.tamanho)+'</td><td>'+p.quantidade+'</td><td>'+badge(p.status)+'</td><td>'+dia(p.criado_em)+'</td><td>'+previsaoHTML(p,false)+'</td><td>'+fmt(p.entregue_em)+'</td>'+
     '<td><div class="row"><a class="btn sm sec" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/clientes/'+c.id)+'">Editar</a>'+
     '<select data-chg="status" data-id="'+p.id+'" style="width:auto;padding:3px">'+STATUS.map(s=>'<option'+(s===p.status?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select></div></td></tr>').join('')||'<tr><td colspan="8" class="mut">Sem pedidos.</td></tr>';
   const hl=hist.map(h=>'<tr><td style="white-space:nowrap">'+fmt(h.data)+'</td><td><b>'+esc(h.acao)+'</b><br><span class="mut">'+esc(h.detalhe)+'</span></td></tr>').join('');
