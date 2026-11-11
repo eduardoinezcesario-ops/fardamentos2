@@ -72,10 +72,17 @@ form.inline{display:inline}
  main{margin:0;max-width:none}.card{border:0;padding:0}.print-only{display:block}
  .bloco{border-bottom:1px solid #bbb;padding:0 0 10px;margin-bottom:12px}
 }
+#login{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:16px;overflow:auto}
+#login .card{width:100%;max-width:380px;margin:0}
+#login .marca{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+#login .logo{background:#4f46e5}
+#nuvem{position:fixed;right:12px;bottom:12px;z-index:40;font-size:12px;padding:5px 11px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--mut);box-shadow:0 2px 8px var(--sh)}
+#nuvem.ruim{background:var(--b0b);color:var(--b0t);border-color:var(--b0t);font-weight:600}
 </style>
 <script>
 try{var _t=localStorage.getItem('tema');if(_t)document.documentElement.setAttribute('data-tema',_t)}catch(e){}
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
 <body>
 <header>
@@ -94,12 +101,25 @@ try{var _t=localStorage.getItem('tema');if(_t)document.documentElement.setAttrib
       <a href="#/backup" data-nav="/backup">💾 Backup</a>
     </nav>
     <div class="hs"><input id="busca-topo" placeholder="🔍 Buscar cliente (nome ou telefone)" autocomplete="off"><div id="sug" class="sug" hidden></div></div>
-    <div class="tools"><button type="button" class="tema" id="btn-tema" title="Alternar tema escuro/claro">🌓</button></div>
+    <div class="tools"><button type="button" class="tema" id="btn-tema" title="Alternar tema escuro/claro">🌓</button> <button type="button" class="tema" id="btn-sair" title="Sair do sistema" hidden>Sair</button></div>
   </div>
 </header>
 <main id="app"></main>
 <noscript><main><div class="card erro"><b>Este sistema precisa do JavaScript ativado no navegador.</b></div></main></noscript>
 <datalist id="nomes"></datalist>
+<div id="nuvem" class="noprint" hidden></div>
+<div id="login" hidden>
+  <div class="card">
+    <div class="marca"><div class="logo"><svg viewBox="0 0 24 24"><path d="M8 3 3 6l2 4 3-1v12h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z"/></svg></div>
+    <div><div class="ht">Controle de Fardamento</div><div class="hsub" style="color:var(--mut)">Entre para continuar</div></div></div>
+    <div id="login-msg" class="erro" style="display:none;border:1px solid var(--errl);border-radius:8px;padding:8px 10px;margin-top:12px;font-weight:600"></div>
+    <form id="login-form" autocomplete="on">
+      <label for="lg-email">E-mail</label><input id="lg-email" type="email" autocomplete="username" required>
+      <label for="lg-senha">Senha</label><input id="lg-senha" type="password" autocomplete="current-password" required>
+      <div style="margin-top:16px"><button class="btn" type="submit" id="lg-ok" style="width:100%">Entrar</button></div>
+    </form>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -132,8 +152,11 @@ const digits=s=>String(s||'').replace(/[^0-9]/g,'');
 const qtdNum=v=>Math.max(1,parseInt(v||'1',10)||1);
 function safeVoltar(u){u=(u||'').trim();return(u.charAt(0)==='/'&&u.charAt(1)!=='/')?u:''}
 
-/* ======================= banco de dados (no navegador) ======================= */
+/* ======================= banco de dados (na nuvem: Supabase) ======================= */
 let DB=null, memOnly=false;
+const SUPABASE_URL='https://qmocokggjmqwlsckworx.supabase.co';
+const SUPABASE_KEY='sb_publishable_zK1I88IJAikTw_-2i0bxpA_xISHdsve';
+let sb=null, VERSAO=0, sujoNuvem=false, fila=Promise.resolve(), ocupado=false, formSujo=false, SNAP=[], timer=null;
 function novoDB(){return{v:1,clientes:[],pedidos:[],historico:[],seq:{cliente:0,pedido:0,hist:0},lastBackup:null}}
 function normalizar(d){
   d=d||{};
@@ -150,23 +173,69 @@ function normalizar(d){
   o.historico.forEach(h=>{h.id=+h.id;h.cliente_id=h.cliente_id==null?null:+h.cliente_id;h.pedido_id=h.pedido_id==null?null:+h.pedido_id;h.detalhe=h.detalhe||'';h.data=h.data||agora()});
   return o;
 }
-function carregar(){
-  try{const r=localStorage.getItem(KEY);DB=r?normalizar(JSON.parse(r)):novoDB()}
-  catch(e){DB=novoDB();memOnly=true}
-  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+function nuvemStatus(t,ruim){const e=$('#nuvem');if(!e)return;e.textContent=t||'';e.className='noprint'+(ruim?' ruim':'');e.hidden=!t}
+async function baixar(){
+  const r=await sb.from('app_state').select('dados,versao').eq('id',1).single();
+  if(r.error)throw r.error;
+  DB=normalizar(r.data.dados);VERSAO=+r.data.versao;memOnly=false;
 }
-function salvar(){
-  try{localStorage.setItem(KEY,JSON.stringify(DB));return true}
-  catch(e){memOnly=true;alert('⚠ Não foi possível gravar os dados neste navegador (modo privado ou sem espaço). Baixe um backup agora, na aba Backup.');return false}
+async function gravar(){
+  if(!sujoNuvem)return;
+  sujoNuvem=false;
+  let r;
+  try{r=await sb.from('app_state').update({dados:DB,versao:VERSAO+1,atualizado_em:new Date().toISOString()}).eq('id',1).eq('versao',VERSAO).select('versao')}
+  catch(e){r={error:e}}
+  if(r.error){sujoNuvem=true;memOnly=true;nuvemStatus('⚠ Sem conexão — ainda não salvo',true);return}
+  if(!r.data||!r.data.length){
+    try{await baixar()}
+    catch(e){await sb.auth.signOut();alert('Sua sessão expirou. Entre de novo. A última alteração pode não ter sido salva.');return}
+    nuvemStatus('⚠ Alteração não salva',true);
+    alert('Outra pessoa alterou os dados ao mesmo tempo, e a sua última alteração NÃO foi salva.\n\nA tela foi atualizada com os dados mais novos. Confira e refaça a alteração.');
+    render();return;
+  }
+  VERSAO=+r.data[0].versao;memOnly=false;nuvemStatus('☁ Salvo');
 }
-function snapshots(){try{return JSON.parse(localStorage.getItem(KEYB)||'[]')}catch(e){return[]}}
-function snapshot(motivo){
+function salvar(){sujoNuvem=true;nuvemStatus('☁ Salvando…');fila=fila.then(gravar,gravar);return true}
+async function atualizar(){
+  await fila;
+  if(sujoNuvem){await gravar();if(sujoNuvem)throw new Error('offline')}
+  const r=await sb.from('app_state').select('versao').eq('id',1).single();
+  if(r.error)throw r.error;
+  if(+r.data.versao!==VERSAO){await baixar();carregarSnaps()}
+}
+function mut(fn){return async function(){
+  if(ocupado)return;ocupado=true;
+  const a=arguments;
+  try{await atualizar()}catch(e){ocupado=false;alert('Sem conexão com o servidor. Nada foi alterado. Confira a internet e tente de novo.');return}
+  try{fn.apply(null,a)}catch(e){console.error(e);alert('Erro: '+e.message)}
+  ocupado=false;
+}}
+async function checar(){
+  if(!sb||!DB||ocupado)return;
   try{
-    const l=snapshots();
-    l.push({data:agora(),motivo:motivo,dados:JSON.stringify(DB)});
-    while(l.length>MAX_SNAP)l.shift();
-    localStorage.setItem(KEYB,JSON.stringify(l));
-  }catch(e){/* sem espaço: segue sem snapshot */}
+    if(sujoNuvem){await gravar();return}
+    const r=await sb.from('app_state').select('versao').eq('id',1).single();
+    if(r.error)throw r.error;
+    memOnly=false;
+    if(+r.data.versao!==VERSAO&&!formSujo&&!ocupado&&!sujoNuvem){await baixar();carregarSnaps();render()}
+    if(!sujoNuvem)nuvemStatus('☁ Salvo');
+  }catch(e){memOnly=true;nuvemStatus('⚠ Sem conexão',true)}
+}
+function snapshots(){return SNAP}
+function snapshot(motivo){
+  const reg={data:agora(),motivo:motivo,dados:JSON.stringify(DB)};
+  SNAP.push(reg);while(SNAP.length>MAX_SNAP)SNAP.shift();
+  sb.from('app_snapshots').insert({data:reg.data,motivo:motivo,dados:JSON.parse(reg.dados)}).then(async r=>{
+    if(r.error)return;
+    const l=await sb.from('app_snapshots').select('id').order('id',{ascending:false});
+    if(l.data&&l.data.length>MAX_SNAP)await sb.from('app_snapshots').delete().in('id',l.data.slice(MAX_SNAP).map(x=>x.id));
+  }).catch(()=>{});
+}
+async function carregarSnaps(){
+  try{
+    const r=await sb.from('app_snapshots').select('data,motivo,dados').order('id',{ascending:false}).limit(MAX_SNAP);
+    if(!r.error&&r.data)SNAP=r.data.reverse().map(x=>({data:x.data,motivo:x.motivo,dados:JSON.stringify(x.dados)}));
+  }catch(e){}
 }
 function log(acao,detalhe,cid,pid){DB.seq.hist++;DB.historico.push({id:DB.seq.hist,cliente_id:cid==null?null:cid,pedido_id:pid==null?null:pid,acao:acao,detalhe:detalhe||'',data:agora()})}
 const cli=id=>DB.clientes.find(c=>c.id===+id);
@@ -381,13 +450,13 @@ function vBackup(){
   const sn=snapshots().slice().reverse();
   const nC=DB.clientes.length,nP=DB.pedidos.length;
   const lista=sn.map((s,i)=>{let n='';try{const d=JSON.parse(s.dados);n=d.clientes.length+' clientes, '+d.pedidos.length+' pedidos'}catch(e){}
-    return '<tr><td style="white-space:nowrap">'+fmt(s.data)+'</td><td>'+esc(s.motivo)+'</td><td class="mut">'+n+'</td><td><button class="btn sm sec" data-act="restaurarSnap" data-i="'+(sn.length-1-i)+'">Restaurar</button></td></tr>'}).join('')||'<tr><td colspan="4" class="mut">Nenhuma cópia automática ainda. Elas são criadas antes de apagar um cliente ou de importar um backup.</td></tr>';
+    return '<tr><td style="white-space:nowrap">'+fmt(s.data)+'</td><td>'+esc(s.motivo)+'</td><td class="mut">'+n+'</td><td><button class="btn sm sec" data-act="restaurarSnap" data-i="'+(sn.length-1-i)+'">Restaurar</button></td></tr>'}).join('')||'<tr><td colspan="4" class="mut">Nenhuma cópia automática ainda. Elas são criadas antes de apagar um cliente ou de restaurar um backup.</td></tr>';
   return '<h1>💾 Backup dos dados</h1>'+
-    '<div class="card"><p><b>Onde ficam os dados:</b> neste navegador, neste computador. Eles <b>não</b> vão para o GitHub nem aparecem em outros computadores ou celulares. Se você limpar os dados do navegador ou trocar de computador, eles somem — por isso o backup abaixo.</p>'+
+    '<div class="card"><p><b>Onde ficam os dados:</b> na nuvem (Supabase), iguais em todos os computadores e celulares, protegidos por e-mail e senha. Limpar o navegador <b>não</b> apaga mais nada. Mesmo assim, baixe um backup de vez em quando e guarde em local seguro.</p>'+
     '<p class="mut">Agora: '+nC+' cliente(s) e '+nP+' pedido(s). Último backup baixado: '+(DB.lastBackup?fmt(DB.lastBackup):'nunca')+'.</p>'+
     '<div class="row"><button class="btn" data-act="exportar">⬇ Baixar backup (arquivo .json)</button>'+
     '<label class="btn sec" style="margin:0;cursor:pointer">⬆ Restaurar de um arquivo<input type="file" id="arq" accept=".json,application/json" style="display:none"></label></div>'+
-    '<p class="mut">Guarde o arquivo em local seguro (pendrive, nuvem). <b>Não coloque esse arquivo no GitHub</b>: ele contém os dados dos clientes. Para levar os dados a outro computador, baixe o backup aqui e restaure lá.</p></div>'+
+    '<p class="mut">Guarde o arquivo em local seguro (pendrive, nuvem). <b>Não coloque esse arquivo no GitHub</b>: ele contém os dados dos clientes.</p></div>'+
     '<div class="card"><h2>Cópias automáticas (últimas '+MAX_SNAP+')</h2><table><tr><th>Data</th><th>Motivo</th><th>Conteúdo</th><th></th></tr>'+lista+'</table></div>';
 }
 function v404(){return '<div class="card"><h1>Não encontrado</h1><p>Esse cadastro não existe (talvez tenha sido apagado).</p><a class="btn" href="#/">Voltar ao painel</a></div>'}
@@ -412,7 +481,7 @@ function rota(path,q){
 }
 function bannerHTML(){
   let b='';
-  if(memOnly)b+='<div class="card aviso noprint"><b>⚠ Os dados não estão sendo gravados neste navegador</b> (modo privado ou bloqueado). Tudo o que você lançar some ao fechar. Abra o sistema numa janela normal.</div>';
+  if(memOnly)b+='<div class="card aviso noprint"><b>⚠ Sem conexão com o servidor.</b> O que você lançar agora ainda não foi salvo. Confira a internet; o sistema tenta de novo sozinho.</div>';
   const tem=DB.clientes.length||DB.pedidos.length;
   if(tem&&!memOnly){
     const lb=DB.lastBackup?new Date(DB.lastBackup.replace(' ','T')).getTime():0;
@@ -421,6 +490,8 @@ function bannerHTML(){
   return b;
 }
 function render(){
+  if(!DB)return;
+  formSujo=false;
   const {path,q}=parseHash();
   let html;
   try{html=rota(path,q)}catch(e){console.error(e);html='<div class="card erro"><b>Erro ao abrir esta tela.</b><br>'+esc(e.message)+'</div>'}
@@ -488,7 +559,7 @@ function importarTexto(txt){
   try{d=JSON.parse(txt)}catch(e){alert('Esse arquivo não é um backup válido.');return}
   if(!d||!Array.isArray(d.clientes)||!Array.isArray(d.pedidos)){alert('Esse arquivo não parece ser um backup do sistema.');return}
   const n=normalizar(d);
-  if(!confirm('Restaurar este backup?\n\nIsto SUBSTITUI os dados atuais deste navegador por: '+n.clientes.length+' cliente(s) e '+n.pedidos.length+' pedido(s).\nOs dados atuais ficam guardados nas cópias automáticas.'))return;
+  if(!confirm('Restaurar este backup?\n\nIsto SUBSTITUI os dados atuais do sistema (para todos os usuários) por: '+n.clientes.length+' cliente(s) e '+n.pedidos.length+' pedido(s).\nOs dados atuais ficam guardados nas cópias automáticas.'))return;
   snapshot('antes de restaurar um backup');DB=n;salvar();ir('#/');
 }
 
@@ -506,6 +577,9 @@ const CHG={
   itemSel:t=>{$('#outro').style.display=t.value==='Outro'?'block':'none'},
   imprimirFiltro:t=>ir('#/imprimir'+(t.value?'?status='+encodeURIComponent(t.value):''))
 };
+
+['status','apagar','exportar','restaurarSnap'].forEach(k=>{ACTS[k]=mut(ACTS[k])});
+CHG.status=mut(CHG.status);
 
 const FORMS={
   clienteNovo:f=>{
@@ -572,14 +646,17 @@ const FORMS={
   }
 };
 
+Object.keys(FORMS).forEach(k=>{FORMS[k]=mut(FORMS[k])});
+const importarMut=mut(importarTexto);
+
 /* ======================= eventos globais ======================= */
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(t&&ACTS[t.dataset.act]){e.preventDefault();ACTS[t.dataset.act](t,e)}});
 document.addEventListener('change',e=>{
   const t=e.target;
-  if(t.id==='arq'){const fl=t.files[0];if(!fl)return;const r=new FileReader();r.onload=()=>importarTexto(String(r.result));r.readAsText(fl);t.value='';return}
+  if(t.id==='arq'){const fl=t.files[0];if(!fl)return;const r=new FileReader();r.onload=()=>importarMut(String(r.result));r.readAsText(fl);t.value='';return}
   if(t.dataset&&t.dataset.chg&&CHG[t.dataset.chg])CHG[t.dataset.chg](t);
 });
-document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.inp==='dica')atualizarDica()});
+document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.inp==='dica')atualizarDica();if(e.target.closest&&e.target.closest('form[data-form]'))formSujo=true});
 document.addEventListener('submit',e=>{const f=e.target;if(f.dataset&&FORMS[f.dataset.form]){e.preventDefault();FORMS[f.dataset.form](f)}});
 window.addEventListener('hashchange',render);
 $('#btn-tema').addEventListener('click',()=>{
@@ -611,8 +688,63 @@ $('#btn-tema').addEventListener('click',()=>{
   document.addEventListener('click',e=>{if(e.target!==i&&!box.contains(e.target))fechar();else if(box.contains(e.target))setTimeout(fechar,0)});
 })();
 
-carregar();
-render();
+/* ======================= login e inicialização ======================= */
+function msgLogin(t){const m=$('#login-msg');m.textContent=t||'';m.style.display=t?'block':'none'}
+function telaLogin(msg){
+  DB=null;
+  $('#login').hidden=false;msgLogin(msg);
+  $('#app').innerHTML='';$('#btn-sair').hidden=true;nuvemStatus('');
+  $('#lg-ok').disabled=false;$('#lg-ok').textContent='Entrar';
+}
+async function migrarLocal(){
+  if(DB.clientes.length||DB.pedidos.length)return;
+  let loc=null;
+  try{const r=localStorage.getItem(KEY);if(r)loc=normalizar(JSON.parse(r))}catch(e){}
+  if(!loc||(!loc.clientes.length&&!loc.pedidos.length))return;
+  if(confirm('Encontrei dados salvos neste navegador ('+loc.clientes.length+' cliente(s) e '+loc.pedidos.length+' pedido(s)).\n\nEnviar para a nuvem agora? Os dados daqui NÃO são apagados.')){
+    DB=loc;log('Dados importados','Migração dos dados que estavam só neste navegador',null,null);salvar();await fila;
+  }
+}
+async function entrar(){
+  $('#login').hidden=true;
+  $('#app').innerHTML='<div class="card">Carregando dados…</div>';
+  try{await baixar()}
+  catch(e){
+    $('#app').innerHTML='<div class="card erro"><b>⚠ Não foi possível carregar os dados.</b><br>'+esc((e&&e.message)||e)+'<br><br>Confira a internet e se o SQL das tabelas foi executado no Supabase.<br><br><button class="btn" onclick="location.reload()">Tentar de novo</button></div>';
+    $('#btn-sair').hidden=false;return;
+  }
+  await migrarLocal();
+  carregarSnaps().then(()=>{if(DB&&parseHash().path==='/backup')render()});
+  $('#btn-sair').hidden=false;nuvemStatus('☁ Salvo');
+  render();
+  if(!timer)timer=setInterval(checar,15000);
+}
+function iniciar(){
+  if(!window.supabase){$('#app').innerHTML='<div class="card erro"><b>⚠ Não foi possível carregar a biblioteca do Supabase.</b> Confira a internet e atualize a página (Ctrl+F5).</div>';return}
+  if(!/^https:\/\//.test(SUPABASE_URL)||SUPABASE_KEY.length<30){$('#app').innerHTML='<div class="card erro"><b>⚠ Falta configurar a conexão.</b> Preencha SUPABASE_URL e SUPABASE_KEY no começo do código do index.html.</div>';return}
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT')telaLogin()});
+  sb.auth.getSession().then(r=>{if(r.data&&r.data.session)entrar();else telaLogin()}).catch(()=>telaLogin('Não foi possível conectar. Confira a internet.'));
+}
+$('#login-form').addEventListener('submit',async e=>{
+  e.preventDefault();msgLogin('');
+  const btn=$('#lg-ok');btn.disabled=true;btn.textContent='Entrando…';
+  let r;
+  try{r=await sb.auth.signInWithPassword({email:$('#lg-email').value.trim(),password:$('#lg-senha').value})}
+  catch(x){r={error:x}}
+  if(r.error){btn.disabled=false;btn.textContent='Entrar';msgLogin(/fetch|network/i.test(r.error.message||'')?'Sem conexão com o servidor.':'E-mail ou senha incorretos.');return}
+  $('#lg-senha').value='';btn.disabled=false;btn.textContent='Entrar';
+  entrar();
+});
+$('#btn-sair').addEventListener('click',async()=>{
+  try{await fila}catch(e){}
+  if(sujoNuvem&&!confirm('Há alterações ainda não salvas. Sair mesmo assim?'))return;
+  sb.auth.signOut();
+});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checar()});
+window.addEventListener('beforeunload',e=>{if(sujoNuvem){e.preventDefault();e.returnValue=''}});
+
+iniciar();
 })();
 </script>
 </body>
