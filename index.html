@@ -360,13 +360,13 @@ function vClienteDetalhe(id){
 function vPedidoForm(p,q){
   const novo=!p;
   const voltar=safeVoltar(q&&q.get('voltar'));
-  let v;
+  let v,cidAberto='';
   if(novo){
-    const sel=q&&+q.get('cliente_id');const cc=sel?cli(sel):null;
+    const sel=q&&+q.get('cliente_id');const cc=sel?cli(sel):null;cidAberto=cc?cc.id:'';
     v={cliente_nome:cc?cc.nome:'',item:'Camisa',tamanho:'',quantidade:1,criado_em:'',previsao_entrega:'',observacao:''};
   }else v={item:p.item,tamanho:p.tamanho,quantidade:p.quantidade,criado_em:(p.criado_em||'').slice(0,10),previsao_entrega:p.previsao_entrega||'',observacao:p.observacao,entregue_em:dtl(p.entregue_em)};
   return '<h1>'+(novo?'Novo pedido':'Editar pedido')+'</h1><div id="erro"></div>'+
-    '<form class="card" data-form="'+(novo?'pedidoNovo':'pedidoEditar')+'" data-id="'+(novo?'':p.id)+'" data-voltar="'+esc(voltar)+'" style="max-width:520px">'+
+    '<form class="card" data-form="'+(novo?'pedidoNovo':'pedidoEditar')+'" data-id="'+(novo?'':p.id)+'" data-cid="'+cidAberto+'" data-voltar="'+esc(voltar)+'" style="max-width:520px">'+
     (novo?'<label>Cliente * (digite o nome; se ainda não existir, é cadastrado automaticamente)</label>'+
       '<input name="cliente_nome" list="nomes" autocomplete="off" required placeholder="Digite o nome do cliente" value="'+esc(v.cliente_nome)+'" data-inp="dica">'+
       '<div id="dica" class="mut" style="margin-top:4px"></div>'+
@@ -490,7 +490,9 @@ function atualizarDica(){
   const f=document.querySelector('[name=cliente_nome]'),d=$('#dica'),tb=$('#tel-box');if(!f||!d)return;
   const t=norm(f.value);
   if(!t){d.textContent='';tb.style.display='';return}
-  if(DB.clientes.some(c=>norm(c.nome)===t)){d.textContent='✔ Cliente já cadastrado — o pedido será lançado nele.';d.style.color='var(--b2t)';tb.style.display='none'}
+  const ex=DB.clientes.find(c=>norm(c.nome)===t),fm=document.querySelector('form[data-form=pedidoNovo]');
+  if(ex&&fm&&+fm.dataset.cid===ex.id){d.textContent='✔ Novo pedido para este cliente já cadastrado.';d.style.color='var(--b2t)';tb.style.display='none'}
+  else if(ex){d.textContent='⚠ Cliente já cadastrado — não é possível cadastrar de novo.';d.style.color='var(--errt)';tb.style.display='none'}
   else{d.textContent='➕ Cliente novo — será cadastrado automaticamente ao salvar.';d.style.color='var(--b1t)';tb.style.display=''}
 }
 const ir=h=>{if(location.hash===h)render();else location.hash=h};
@@ -574,6 +576,10 @@ const FORMS={
     let item=clean(f.item.value);
     if(item==='Outro'&&clean(f.item_outro.value))item=clean(f.item_outro.value);
     let c=achaDup(nome);
+    if(c&&+f.dataset.cid!==c.id){
+      const ab=pedidosDe(c.id).map(x=>'<br>• <a href="#/pedidos/'+x.id+'/editar'+lnkVoltar('/')+'">✏ Abrir pedido: '+esc((x.quantidade+'x '+x.item+' '+(x.tamanho||'')).trim())+'</a> <span class="mut">('+esc(x.status)+')</span>').join('');
+      return erroForm('Cliente já cadastrado. O pedido não foi lançado.<br>Cadastro existente: <a href="#/clientes/'+c.id+'"><b>'+esc(c.nome)+'</b></a> '+esc(c.telefone)+(ab?'<br><br>Abra o pedido dele para alterar:'+ab:'')+'<br><br><span class="mut">Ou, se for outro pedido deste cliente: <a href="#/pedidos/novo?cliente_id='+c.id+'">lançar um novo pedido para ele</a></span>');
+    }
     if(c){const tel=f.telefone.value.trim();
       if(tel&&!c.telefone){c.telefone=tel;log('Cadastro editado',"Telefone: '' → '"+tel+"' (informado ao lançar o pedido)",c.id,null)}}
     else{DB.seq.cliente++;c={id:DB.seq.cliente,nome:nome,telefone:f.telefone.value.trim(),observacao:'',criado_em:agora()};
