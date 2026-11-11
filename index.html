@@ -10,14 +10,29 @@
 *{box-sizing:border-box}
 body{margin:0;font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
 a{color:var(--link)}
-header{background:var(--hd);color:var(--hdt);padding:0 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
-header b{padding:14px 0;font-size:17px;color:#fff}
+header{background:linear-gradient(90deg,#4338ca,#4f46e5 55%,#5b5bf0);color:#fff;box-shadow:0 2px 10px var(--sh)}
+.hb{max-width:1100px;margin:0 auto;padding:16px 16px 10px;display:flex;align-items:center;gap:14px}
+.logo{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.2);display:grid;place-items:center;flex:none}
+.logo svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ht{font-size:19px;font-weight:700;line-height:1.15}.hsub{font-size:12px;color:#c7d2fe}
+.novo{margin-left:auto;background:#10b981;color:#fff;text-decoration:none;font-weight:600;padding:10px 18px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.2);white-space:nowrap}
+.novo:hover{background:#0ea371}
+.hn{max-width:1100px;margin:0 auto;padding:0 16px 10px;display:flex;align-items:center;gap:6px 18px;flex-wrap:wrap}
 header nav{display:contents}
-header a{color:var(--hdt);text-decoration:none;padding:14px 4px;border-bottom:3px solid transparent}
-header a:hover,header a.on{border-color:var(--hdh);color:#fff}
-.tools{display:flex;gap:6px;align-items:center}
-.tema{background:transparent;border:1px solid rgba(255,255,255,.3);color:var(--hdt);border-radius:7px;padding:4px 10px;cursor:pointer;font:inherit}
-.tema:hover{background:rgba(255,255,255,.12)}
+header nav a{color:#e0e7ff;text-decoration:none;padding:6px 2px;border-bottom:2px solid transparent;font-size:14px}
+header nav a:hover,header nav a.on{border-color:#fff;color:#fff}
+.tema{background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:7px;padding:4px 10px;cursor:pointer;font:inherit}
+.tema:hover{background:rgba(255,255,255,.28)}
+.stats{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:18px}
+.stat{background:var(--card);border-radius:12px;padding:16px 18px;display:flex;justify-content:space-between;align-items:flex-start;box-shadow:0 1px 4px var(--sh);border:1px solid var(--line)}
+.stat small{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.stat b{font-size:28px;line-height:1.3;font-weight:700}
+.sic{width:38px;height:38px;border-radius:9px;display:grid;place-items:center}
+.sic svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.s-t small{color:var(--mut)}.s-t .sic{background:var(--b3b);color:var(--mut)}
+.s-p small,.s-p b{color:#d97706}.s-p .sic{background:rgba(217,119,6,.15);color:#d97706}
+.s-r small,.s-r b{color:#3b82f6}.s-r .sic{background:rgba(59,130,246,.18);color:#3b82f6}
+.s-e small,.s-e b{color:#10b981}.s-e .sic{background:rgba(16,185,129,.18);color:#10b981}
 main{max-width:1100px;margin:22px auto;padding:0 16px}
 h1{font-size:22px;margin:0 0 14px}h2{font-size:16px;margin:0 0 10px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
@@ -39,7 +54,7 @@ label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
 .item{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--item)}
 .erro{background:var(--errb);border-color:var(--errl)}
 .aviso{background:var(--b0b);border-color:var(--b0t);color:var(--b0t)}.aviso a{color:inherit;font-weight:700}
-.hs{margin-left:auto;position:relative}.hs input{width:260px;padding:6px 10px}
+.hs{margin-left:auto;position:relative}.hs input{width:260px;padding:6px 10px;border-radius:8px;border:0;background:rgba(255,255,255,.95);color:#1d2320}.hs input::placeholder{color:#6b7280}
 .sug{position:absolute;top:100%;right:0;width:360px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px var(--sh);z-index:30;max-height:380px;overflow:auto}
 header .sug a{display:block;color:var(--ink);padding:8px 12px;border-bottom:1px solid var(--line);text-decoration:none}
 header .sug a:hover,header .sug a.on{background:var(--pri2)}
@@ -64,18 +79,23 @@ try{var _t=localStorage.getItem('tema');if(_t)document.documentElement.setAttrib
 </head>
 <body>
 <header>
-  <b>🪖 Força Tática · Fardamentos</b>
-  <nav>
-    <a href="#/" data-nav="/">Painel</a>
-    <a href="#/clientes" data-nav="/clientes">Clientes</a>
-    <a href="#/pedidos" data-nav="/pedidos">Editar pedido</a>
-    <a href="#/pedidos/novo" data-nav="/pedidos/novo">+ Novo pedido</a>
-    <a href="#/imprimir" data-nav="/imprimir">Imprimir lista</a>
-    <a href="#/historico" data-nav="/historico">Histórico geral</a>
-    <a href="#/backup" data-nav="/backup">💾 Backup</a>
-  </nav>
-  <div class="hs"><input id="busca-topo" placeholder="🔍 Buscar cliente (nome ou telefone)" autocomplete="off"><div id="sug" class="sug" hidden></div></div>
-  <div class="tools"><button type="button" class="tema" id="btn-tema" title="Alternar tema escuro/claro">🌓</button></div>
+  <div class="hb">
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M8 3 3 6l2 4 3-1v12h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z"/></svg></div>
+    <div><div class="ht">Controle de Fardamento</div><div class="hsub">Gestão de Produção e Entregas</div></div>
+    <a class="novo" href="#/pedidos/novo">+ Novo Pedido</a>
+  </div>
+  <div class="hn">
+    <nav>
+      <a href="#/" data-nav="/">Painel</a>
+      <a href="#/clientes" data-nav="/clientes">Clientes</a>
+      <a href="#/pedidos" data-nav="/pedidos">Editar pedido</a>
+      <a href="#/imprimir" data-nav="/imprimir">Imprimir lista</a>
+      <a href="#/historico" data-nav="/historico">Histórico geral</a>
+      <a href="#/backup" data-nav="/backup">💾 Backup</a>
+    </nav>
+    <div class="hs"><input id="busca-topo" placeholder="🔍 Buscar cliente (nome ou telefone)" autocomplete="off"><div id="sug" class="sug" hidden></div></div>
+    <div class="tools"><button type="button" class="tema" id="btn-tema" title="Alternar tema escuro/claro">🌓</button></div>
+  </div>
 </header>
 <main id="app"></main>
 <noscript><main><div class="card erro"><b>Este sistema precisa do JavaScript ativado no navegador.</b></div></main></noscript>
@@ -200,7 +220,9 @@ function btnStatus(p,voltar){
 /* ======================= telas ======================= */
 function vPainel(){
   const cont={};STATUS.forEach(s=>cont[s]=0);DB.pedidos.forEach(p=>cont[p.status]++);
-  const kpis=STATUS.map(s=>'<div class="card" style="margin:0"><div class="kpi">'+cont[s]+'<small>'+badge(s)+'</small></div></div>').join('');
+  const ic={t:'<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',p:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',r:'<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/>',e:'<path d="M20 6 9 17l-5-5"/>'};
+  const stat=(k,lab,n)=>'<div class="stat s-'+k+'"><div><small>'+lab+'</small><b>'+n+'</b></div><div class="sic"><svg viewBox="0 0 24 24">'+ic[k]+'</svg></div></div>';
+  const kpis=stat('t','Total de pedidos',DB.pedidos.length)+stat('p','Em produção',cont['Em produção'])+stat('r','Prontos p/ retirada',cont['Pronto para retirada'])+stat('e','Entregues',cont['Entregue']);
   const cols=STATUS.slice(0,3).map(s=>{
     const l=DB.pedidos.filter(p=>p.status===s).sort((a,b)=>a.criado_em<b.criado_em?-1:1);
     const itens=l.map(p=>{const c=cli(p.cliente_id)||{nome:'?',telefone:''};
@@ -215,7 +237,7 @@ function vPainel(){
   const ent=DB.pedidos.filter(p=>p.status==='Entregue').sort((a,b)=>(b.entregue_em||'')<(a.entregue_em||'')?-1:1).slice(0,8);
   const entHTML=ent.map(p=>{const c=cli(p.cliente_id)||{nome:'?'};
     return '<tr><td><a href="#/clientes/'+p.cliente_id+'">'+esc(c.nome)+'</a></td><td>'+p.quantidade+'x '+esc(p.item)+' '+esc(p.tamanho)+'</td><td>'+fmt(p.entregue_em)+' <a class="mut" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/')+'">✏ editar</a></td></tr>'}).join('')||'<tr><td colspan="3" class="mut">Nenhuma entrega registrada.</td></tr>';
-  return '<h1>Painel</h1><div class="grid g4" style="margin-bottom:16px">'+kpis+'</div><div class="grid g3">'+cols+'</div>'+
+  return '<div class="stats">'+kpis+'</div><div class="grid g3">'+cols+'</div>'+
     '<div class="card"><h2>Últimas entregas</h2><table><tr><th>Cliente</th><th>Item</th><th>Entregue em</th></tr>'+entHTML+'</table></div>';
 }
 
