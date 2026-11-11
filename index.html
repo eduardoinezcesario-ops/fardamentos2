@@ -124,6 +124,7 @@ function dia(d){if(!d)return '—';const m=/^(\d{4})-(\d\d)-(\d\d)/.exec(d);retu
 const dtl=dt=>dt?String(dt).slice(0,16).replace(' ','T'):'';
 function deDtl(v){v=(v||'').trim();if(!v)return null;if(!/^\d{4}-\d\d-\d\dT\d\d:\d\d/.test(v))throw new Error('data');return v.slice(0,16).replace('T',' ')+':00'}
 function deDia(v){v=(v||'').trim();if(!v)return null;if(!/^\d{4}-\d\d-\d\d$/.test(v))throw new Error('data');return v}
+function entradaDe(v,antigo){v=(v||'').trim();if(!v)return antigo||agora();if(!/^\d{4}-\d\d-\d\d$/.test(v))throw new Error('data');if(antigo&&antigo.slice(0,10)===v)return antigo;return v+' '+(v===hoje()?agora().slice(11):'12:00:00')}
 function dtlEdit(v,antigo){const n=deDtl(v);if(!n)return antigo||null;if(antigo&&n.slice(0,16)===antigo.slice(0,16))return antigo;return n}
 function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().split(/\s+/).filter(Boolean).join(' ')}
 const clean=s=>String(s||'').trim().replace(/\s+/g,' ');
@@ -230,7 +231,7 @@ function vPainel(){
       ' <a class="mut" style="float:right" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/')+'">✏ Editar</a><br>'+
       (p.observacao?'<span class="mut">📝 '+esc(p.observacao)+'</span><br>':'')+
       '<a href="#/clientes/'+p.cliente_id+'">'+esc(c.nome)+'</a> <span class="mut">'+esc(c.telefone)+'</span><br>'+
-      '<span class="mut">entrou '+fmt(p.criado_em)+'</span><br>'+previsaoHTML(p,true)+
+      '<span class="mut">entrou '+dia(p.criado_em)+'</span><br>'+previsaoHTML(p,true)+
       '<div class="row" style="margin-top:6px">'+btnStatus(p,'/')+'</div></div>'}).join('')||'<p class="mut">Nada aqui.</p>';
     return '<div class="card"><h2>'+esc(s)+' ('+l.length+')</h2>'+itens+'</div>';
   }).join('');
@@ -265,7 +266,7 @@ function vClienteForm(c){
     '<div style="width:110px"><label>Tamanho</label><input name="tamanho_'+p.id+'" value="'+esc(p.tamanho)+'"></div>'+
     '<div style="width:90px"><label>Qtd.</label><input type="number" min="1" name="qtd_'+p.id+'" value="'+p.quantidade+'"></div></div>'+
     '<label>Descrição / observação do pedido</label><textarea name="obs_'+p.id+'" rows="2">'+esc(p.observacao)+'</textarea>'+
-    '<div class="row"><div class="sp"><label>Entrada</label><input type="datetime-local" name="entrada_'+p.id+'" value="'+dtl(p.criado_em)+'"></div>'+
+    '<div class="row"><div class="sp"><label>Entrada</label><input type="date" name="entrada_'+p.id+'" value="'+esc((p.criado_em||'').slice(0,10))+'"></div>'+
     '<div class="sp"><label>Previsão de entrega</label><input type="date" name="previsao_'+p.id+'" value="'+esc(p.previsao_entrega||'')+'"></div>'+
     (p.status==='Entregue'?'<div class="sp"><label>Entregue em</label><input type="datetime-local" name="entregue_'+p.id+'" value="'+dtl(p.entregue_em)+'"></div>':'')+
     '</div></div>').join('')+'</div>'):'';
@@ -283,7 +284,7 @@ function vClienteDetalhe(id){
   const ps=pedidosDe(id).sort((a,b)=>a.criado_em<b.criado_em?1:-1);
   const hist=DB.historico.filter(h=>h.cliente_id===c.id).sort((a,b)=>b.id-a.id);
   const abertos=ps.filter(p=>p.status!=='Entregue').length;
-  const linhas=ps.map(p=>'<tr><td>'+esc(p.item)+(p.observacao?'<br><span class="mut">'+esc(p.observacao)+'</span>':'')+'</td><td>'+esc(p.tamanho)+'</td><td>'+p.quantidade+'</td><td>'+badge(p.status)+'</td><td>'+fmt(p.criado_em)+'</td><td>'+previsaoHTML(p,false)+'</td><td>'+fmt(p.entregue_em)+'</td>'+
+  const linhas=ps.map(p=>'<tr><td>'+esc(p.item)+(p.observacao?'<br><span class="mut">'+esc(p.observacao)+'</span>':'')+'</td><td>'+esc(p.tamanho)+'</td><td>'+p.quantidade+'</td><td>'+badge(p.status)+'</td><td>'+dia(p.criado_em)+'</td><td>'+previsaoHTML(p,false)+'</td><td>'+fmt(p.entregue_em)+'</td>'+
     '<td><div class="row"><a class="btn sm sec" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/clientes/'+c.id)+'">Editar</a>'+
     '<select data-chg="status" data-id="'+p.id+'" style="width:auto;padding:3px">'+STATUS.map(s=>'<option'+(s===p.status?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select></div></td></tr>').join('')||'<tr><td colspan="8" class="mut">Sem pedidos.</td></tr>';
   const hl=hist.map(h=>'<tr><td style="white-space:nowrap">'+fmt(h.data)+'</td><td><b>'+esc(h.acao)+'</b><br><span class="mut">'+esc(h.detalhe)+'</span></td></tr>').join('');
@@ -302,7 +303,7 @@ function vPedidoForm(p,q){
   if(novo){
     const sel=q&&+q.get('cliente_id');const cc=sel?cli(sel):null;
     v={cliente_nome:cc?cc.nome:'',item:'Camisa',tamanho:'',quantidade:1,criado_em:'',previsao_entrega:'',observacao:''};
-  }else v={item:p.item,tamanho:p.tamanho,quantidade:p.quantidade,criado_em:dtl(p.criado_em),previsao_entrega:p.previsao_entrega||'',observacao:p.observacao,entregue_em:dtl(p.entregue_em)};
+  }else v={item:p.item,tamanho:p.tamanho,quantidade:p.quantidade,criado_em:(p.criado_em||'').slice(0,10),previsao_entrega:p.previsao_entrega||'',observacao:p.observacao,entregue_em:dtl(p.entregue_em)};
   return '<h1>'+(novo?'Novo pedido':'Editar pedido')+'</h1><div id="erro"></div>'+
     '<form class="card" data-form="'+(novo?'pedidoNovo':'pedidoEditar')+'" data-id="'+(novo?'':p.id)+'" data-voltar="'+esc(voltar)+'" style="max-width:520px">'+
     (novo?'<label>Cliente * (digite o nome; se ainda não existir, é cadastrado automaticamente)</label>'+
@@ -315,9 +316,9 @@ function vPedidoForm(p,q){
       :'<input name="item" required value="'+esc(v.item)+'">')+
     '<div class="row"><div class="sp"><label>Tamanho</label><input name="tamanho" value="'+esc(v.tamanho)+'"></div>'+
     '<div class="sp"><label>Quantidade</label><input name="quantidade" type="number" min="1" value="'+v.quantidade+'"></div></div>'+
-    '<div class="row"><div class="sp"><label>Data de entrada na loja</label><input type="datetime-local" name="criado_em" value="'+esc(v.criado_em)+'"></div>'+
+    '<div class="row"><div class="sp"><label>Data de entrada na loja</label><input type="date" name="criado_em" value="'+esc(v.criado_em)+'"></div>'+
     '<div class="sp"><label>Previsão de entrega ao cliente</label><input type="date" name="previsao_entrega" value="'+esc(v.previsao_entrega)+'"></div></div>'+
-    (novo?'<p class="mut">Deixe a data de entrada em branco para usar agora. As duas datas podem ser alteradas depois.</p>':'')+
+    (novo?'<p class="mut">Deixe a data de entrada em branco para usar hoje. As duas datas podem ser alteradas depois.</p>':'')+
     (!novo&&p.status==='Entregue'?'<label>Data e hora em que foi entregue ao cliente</label><input type="datetime-local" name="entregue_em" value="'+esc(v.entregue_em)+'">':'')+
     '<label>Descrição / observação do pedido</label><textarea name="observacao" rows="3">'+esc(v.observacao)+'</textarea>'+
     (novo?'':'<p class="mut">Cada alteração fica registrada no histórico, com o valor antigo e o novo.</p>')+
@@ -337,7 +338,7 @@ function vPedidos(q){
       '<span class="row noprint"><a class="btn sm sec" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/pedidos')+'">✏ Editar</a>'+btnStatus(p,'/pedidos')+'</span></div>'+
       '<div style="margin-top:4px"><a href="#/clientes/'+p.cliente_id+'"><b>'+esc(c.nome)+'</b></a> <span class="mut">'+esc(c.telefone)+'</span></div>'+
       '<div style="margin-top:4px">'+(p.observacao?'📝 '+esc(p.observacao):'<span class="mut">📝 sem descrição</span>')+'</div>'+
-      '<div class="mut" style="margin-top:4px">Entrada '+fmt(p.criado_em)+' · Previsão '+(atrasado(p)?'<span class="late">'+dia(p.previsao_entrega)+' · ATRASADO</span>':dia(p.previsao_entrega))+(p.entregue_em?' · Entregue '+fmt(p.entregue_em):'')+'</div></div>';
+      '<div class="mut" style="margin-top:4px">Entrada '+dia(p.criado_em)+' · Previsão '+(atrasado(p)?'<span class="late">'+dia(p.previsao_entrega)+' · ATRASADO</span>':dia(p.previsao_entrega))+(p.entregue_em?' · Entregue '+fmt(p.entregue_em):'')+'</div></div>';
   }).join('')||'<p class="mut">Nenhum pedido.</p>';
   return '<div class="row noprint"><h1 class="sp">Editar pedido</h1><a class="btn" href="#/pedidos/novo">+ Novo pedido</a><button class="btn sec" data-act="imprimirPagina">🖨 Imprimir esta lista</button></div>'+
     '<div class="card noprint"><div class="row"><input id="filtro" placeholder="🔍 Buscar por cliente, item, tamanho ou descrição" style="max-width:480px" autocomplete="off">'+
@@ -361,7 +362,7 @@ function vImprimir(q){
   const blocos=grupos.map(g=>'<div class="card bloco"><h2>'+esc(g.c.nome)+' <span class="mut">· '+esc(g.c.telefone||'sem telefone')+'</span></h2>'+
     (g.c.observacao?'<div class="mut" style="margin-bottom:6px">Obs. do cadastro: '+esc(g.c.observacao)+'</div>':'')+
     '<table><tr><th>Pedido</th><th>Tam.</th><th>Qtd.</th><th>Descrição</th><th>Entrada</th><th>Previsão</th><th>Situação</th></tr>'+
-    (g.ps.map(p=>'<tr><td><b>'+esc(p.item)+'</b></td><td>'+esc(p.tamanho)+'</td><td>'+p.quantidade+'</td><td>'+esc(p.observacao)+'</td><td>'+fmt(p.criado_em)+'</td><td>'+dia(p.previsao_entrega)+'</td><td>'+badge(p.status)+(p.entregue_em?'<br><span class="mut">entregue '+fmt(p.entregue_em)+'</span>':'')+'</td></tr>').join('')||'<tr><td colspan="7" class="mut">Sem pedidos.</td></tr>')+
+    (g.ps.map(p=>'<tr><td><b>'+esc(p.item)+'</b></td><td>'+esc(p.tamanho)+'</td><td>'+p.quantidade+'</td><td>'+esc(p.observacao)+'</td><td>'+dia(p.criado_em)+'</td><td>'+dia(p.previsao_entrega)+'</td><td>'+badge(p.status)+(p.entregue_em?'<br><span class="mut">entregue '+fmt(p.entregue_em)+'</span>':'')+'</td></tr>').join('')||'<tr><td colspan="7" class="mut">Sem pedidos.</td></tr>')+
     '</table></div>').join('')||'<p class="mut">Nada para imprimir.</p>';
   return '<div class="row noprint"><h1 class="sp">'+(cid?'Ficha do cliente':'Clientes e pedidos')+' · impressão</h1>'+
     (cid?'<a class="btn sec" href="#/imprimir">Ver todos os clientes</a>':'<select data-chg="imprimirFiltro" style="width:auto"><option value="">Todos os status</option>'+STATUS.map(s=>'<option'+(s===filtro?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select>')+
@@ -526,7 +527,7 @@ const FORMS={
     try{
       ps.forEach(p=>{const i=p.id,g=n=>f.elements[n+'_'+i];
         const n={item:clean(g('item').value)||p.item,tamanho:clean(g('tamanho').value),quantidade:qtdNum(g('qtd').value),observacao:g('obs').value.trim(),
-          criado_em:dtlEdit(g('entrada').value,p.criado_em),previsao_entrega:deDia(g('previsao').value)||'',
+          criado_em:entradaDe(g('entrada').value,p.criado_em),previsao_entrega:deDia(g('previsao').value)||'',
           entregue_em:p.status==='Entregue'?dtlEdit(g('entregue').value,p.entregue_em):p.entregue_em};
         novos[i]=n});
     }catch(e){return erroForm('Data ou quantidade inválida. Confira os campos.')}
@@ -542,7 +543,7 @@ const FORMS={
     const nome=clean(f.cliente_nome.value);
     if(!nome)return erroForm('Informe o nome do cliente.');
     let entrada,prev,qtd;
-    try{entrada=deDtl(f.criado_em.value)||agora();prev=deDia(f.previsao_entrega.value);qtd=qtdNum(f.quantidade.value)}
+    try{entrada=entradaDe(f.criado_em.value,null);prev=deDia(f.previsao_entrega.value);qtd=qtdNum(f.quantidade.value)}
     catch(e){return erroForm('Data ou quantidade inválida.')}
     let item=clean(f.item.value);
     if(item==='Outro'&&clean(f.item_outro.value))item=clean(f.item_outro.value);
@@ -561,7 +562,7 @@ const FORMS={
     const p=ped(+f.dataset.id);if(!p)return;
     let n;
     try{n={item:clean(f.item.value)||p.item,tamanho:clean(f.tamanho.value),quantidade:qtdNum(f.quantidade.value),observacao:f.observacao.value.trim(),
-      criado_em:dtlEdit(f.criado_em.value,p.criado_em),previsao_entrega:deDia(f.previsao_entrega.value)||'',
+      criado_em:entradaDe(f.criado_em.value,p.criado_em),previsao_entrega:deDia(f.previsao_entrega.value)||'',
       entregue_em:p.status==='Entregue'?dtlEdit(f.entregue_em.value,p.entregue_em):p.entregue_em}}
     catch(e){return erroForm('Data ou quantidade inválida.')}
     const m=diff(p,n,{item:'Item',tamanho:'Tamanho',quantidade:'Qtd.',observacao:'Obs.',criado_em:'Data de entrada',previsao_entrega:'Previsão de entrega',entregue_em:'Data da entrega'});
