@@ -98,7 +98,6 @@ try{var _t=localStorage.getItem('tema');if(_t)document.documentElement.setAttrib
       <a href="#/pedidos" data-nav="/pedidos">Editar pedido</a>
       <a href="#/imprimir" data-nav="/imprimir">Imprimir lista</a>
       <a href="#/historico" data-nav="/historico">Histórico geral</a>
-      <a href="#/backup" data-nav="/backup">💾 Backup</a>
     </nav>
     <div class="hs"><input id="busca-topo" placeholder="🔍 Buscar cliente (nome ou telefone)" autocomplete="off"><div id="sug" class="sug" hidden></div></div>
     <div class="tools"><button type="button" class="tema" id="btn-tema" title="Alternar tema escuro/claro">🌓</button> <button type="button" class="tema" id="btn-sair" title="Sair do sistema" hidden>Sair</button></div>
@@ -201,7 +200,7 @@ async function atualizar(){
   if(sujoNuvem){await gravar();if(sujoNuvem)throw new Error('offline')}
   const r=await sb.from('app_state').select('versao').eq('id',1).single();
   if(r.error)throw r.error;
-  if(+r.data.versao!==VERSAO){await baixar();carregarSnaps()}
+  if(+r.data.versao!==VERSAO){await baixar()}
 }
 function mut(fn){return async function(){
   if(ocupado)return;ocupado=true;
@@ -217,7 +216,7 @@ async function checar(){
     const r=await sb.from('app_state').select('versao').eq('id',1).single();
     if(r.error)throw r.error;
     memOnly=false;
-    if(+r.data.versao!==VERSAO&&!formSujo&&!ocupado&&!sujoNuvem){await baixar();carregarSnaps();render()}
+    if(+r.data.versao!==VERSAO&&!formSujo&&!ocupado&&!sujoNuvem){await baixar();render()}
     if(!sujoNuvem)nuvemStatus('☁ Salvo');
   }catch(e){memOnly=true;nuvemStatus('⚠ Sem conexão',true)}
 }
@@ -230,12 +229,6 @@ function snapshot(motivo){
     const l=await sb.from('app_snapshots').select('id').order('id',{ascending:false});
     if(l.data&&l.data.length>MAX_SNAP)await sb.from('app_snapshots').delete().in('id',l.data.slice(MAX_SNAP).map(x=>x.id));
   }).catch(()=>{});
-}
-async function carregarSnaps(){
-  try{
-    const r=await sb.from('app_snapshots').select('data,motivo,dados').order('id',{ascending:false}).limit(MAX_SNAP);
-    if(!r.error&&r.data)SNAP=r.data.reverse().map(x=>({data:x.data,motivo:x.motivo,dados:JSON.stringify(x.dados)}));
-  }catch(e){}
 }
 function log(acao,detalhe,cid,pid){DB.seq.hist++;DB.historico.push({id:DB.seq.hist,cliente_id:cid==null?null:cid,pedido_id:pid==null?null:pid,acao:acao,detalhe:detalhe||'',data:agora()})}
 const cli=id=>DB.clientes.find(c=>c.id===+id);
@@ -296,10 +289,9 @@ function vPainel(){
   const cols=STATUS.slice(0,3).map(s=>{
     const l=DB.pedidos.filter(p=>p.status===s).sort((a,b)=>a.criado_em<b.criado_em?-1:1);
     const itens=l.map(p=>{const c=cli(p.cliente_id)||{nome:'?',telefone:''};
-      return '<div class="item"><b>'+p.quantidade+'x '+esc(p.item)+'</b> '+esc(p.tamanho)+
+      return '<div class="item"><b><a href="#/clientes/'+p.cliente_id+'" style="color:inherit">'+esc(c.nome)+'</a></b> <span class="mut">'+esc(c.telefone)+'</span>'+
       ' <a class="mut" style="float:right" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/')+'">✏ Editar</a><br>'+
-      (p.observacao?'<span class="mut">📝 '+esc(p.observacao)+'</span><br>':'')+
-      '<a href="#/clientes/'+p.cliente_id+'">'+esc(c.nome)+'</a> <span class="mut">'+esc(c.telefone)+'</span><br>'+
+      '<span class="mut" style="white-space:normal;overflow-wrap:anywhere">📝 '+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho),p.observacao].filter(Boolean).join(' · '))+'</span><br>'+
       '<span class="mut">entrou '+dia(p.criado_em)+'</span><br>'+previsaoHTML(p,true)+
       '<div class="row" style="margin-top:6px">'+btnStatus(p,'/')+'</div></div>'}).join('')||'<p class="mut">Nada aqui.</p>';
     return '<div class="card"><h2>'+esc(s)+' ('+l.length+')</h2>'+itens+'</div>';
@@ -446,19 +438,6 @@ function vHistorico(){
   return '<h1>Histórico geral</h1><div class="card"><table><tr><th>Data</th><th>Cliente</th><th>Ação</th><th>Detalhe</th></tr>'+linhas+'</table></div>';
 }
 
-function vBackup(){
-  const sn=snapshots().slice().reverse();
-  const nC=DB.clientes.length,nP=DB.pedidos.length;
-  const lista=sn.map((s,i)=>{let n='';try{const d=JSON.parse(s.dados);n=d.clientes.length+' clientes, '+d.pedidos.length+' pedidos'}catch(e){}
-    return '<tr><td style="white-space:nowrap">'+fmt(s.data)+'</td><td>'+esc(s.motivo)+'</td><td class="mut">'+n+'</td><td><button class="btn sm sec" data-act="restaurarSnap" data-i="'+(sn.length-1-i)+'">Restaurar</button></td></tr>'}).join('')||'<tr><td colspan="4" class="mut">Nenhuma cópia automática ainda. Elas são criadas antes de apagar um cliente ou de restaurar um backup.</td></tr>';
-  return '<h1>💾 Backup dos dados</h1>'+
-    '<div class="card"><p><b>Onde ficam os dados:</b> na nuvem (Supabase), iguais em todos os computadores e celulares, protegidos por e-mail e senha. Limpar o navegador <b>não</b> apaga mais nada. Mesmo assim, baixe um backup de vez em quando e guarde em local seguro.</p>'+
-    '<p class="mut">Agora: '+nC+' cliente(s) e '+nP+' pedido(s). Último backup baixado: '+(DB.lastBackup?fmt(DB.lastBackup):'nunca')+'.</p>'+
-    '<div class="row"><button class="btn" data-act="exportar">⬇ Baixar backup (arquivo .json)</button>'+
-    '<label class="btn sec" style="margin:0;cursor:pointer">⬆ Restaurar de um arquivo<input type="file" id="arq" accept=".json,application/json" style="display:none"></label></div>'+
-    '<p class="mut">Guarde o arquivo em local seguro (pendrive, nuvem). <b>Não coloque esse arquivo no GitHub</b>: ele contém os dados dos clientes.</p></div>'+
-    '<div class="card"><h2>Cópias automáticas (últimas '+MAX_SNAP+')</h2><table><tr><th>Data</th><th>Motivo</th><th>Conteúdo</th><th></th></tr>'+lista+'</table></div>';
-}
 function v404(){return '<div class="card"><h1>Não encontrado</h1><p>Esse cadastro não existe (talvez tenha sido apagado).</p><a class="btn" href="#/">Voltar ao painel</a></div>'}
 
 /* ======================= roteamento ======================= */
@@ -476,17 +455,11 @@ function rota(path,q){
   if((m=/^\/pedidos\/(\d+)\/editar$/.exec(path))){const p=ped(+m[1]);return p?vPedidoForm(p,q):v404()}
   if(path==='/imprimir')return vImprimir(q);
   if(path==='/historico')return vHistorico();
-  if(path==='/backup')return vBackup();
   return v404();
 }
 function bannerHTML(){
   let b='';
   if(memOnly)b+='<div class="card aviso noprint"><b>⚠ Sem conexão com o servidor.</b> O que você lançar agora ainda não foi salvo. Confira a internet; o sistema tenta de novo sozinho.</div>';
-  const tem=DB.clientes.length||DB.pedidos.length;
-  if(tem&&!memOnly){
-    const lb=DB.lastBackup?new Date(DB.lastBackup.replace(' ','T')).getTime():0;
-    if(!lb||Date.now()-lb>7*864e5)b+='<div class="card aviso noprint">💾 '+(lb?'Faz mais de 7 dias que você não baixa um backup.':'Você ainda não baixou nenhum backup.')+' <a href="#/backup">Baixar agora</a></div>';
-  }
   return b;
 }
 function render(){
@@ -495,7 +468,7 @@ function render(){
   const {path,q}=parseHash();
   let html;
   try{html=rota(path,q)}catch(e){console.error(e);html='<div class="card erro"><b>Erro ao abrir esta tela.</b><br>'+esc(e.message)+'</div>'}
-  $('#app').innerHTML=(path==='/backup'||path==='/imprimir'?'':bannerHTML())+html;
+  $('#app').innerHTML=(path==='/imprimir'?'':bannerHTML())+html;
   $('#nomes').innerHTML=DB.clientes.map(c=>'<option value="'+esc(c.nome)+'">').join('');
   document.querySelectorAll('header nav a').forEach(a=>{const n=a.getAttribute('data-nav');a.classList.toggle('on',n===path||(n!=='/'&&path.indexOf(n+'/')===0&&n!=='/pedidos'&&n!=='/clientes'))});
   if(path!==ultimoPath){window.scrollTo(0,0);ultimoPath=path}
@@ -545,32 +518,11 @@ function apagarCliente(id){
   log('Cliente apagado',c.nome+' · tel. '+(c.telefone||'—')+' · pedidos removidos: '+resumo,id,null);
   salvar();ir('#/clientes');
 }
-function exportar(){
-  DB.lastBackup=agora();salvar();
-  const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});
-  const a=document.createElement('a'),d=new Date();
-  a.href=URL.createObjectURL(blob);
-  a.download='fardamentos-backup-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+'.json';
-  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-  render();
-}
-function importarTexto(txt){
-  let d;
-  try{d=JSON.parse(txt)}catch(e){alert('Esse arquivo não é um backup válido.');return}
-  if(!d||!Array.isArray(d.clientes)||!Array.isArray(d.pedidos)){alert('Esse arquivo não parece ser um backup do sistema.');return}
-  const n=normalizar(d);
-  if(!confirm('Restaurar este backup?\n\nIsto SUBSTITUI os dados atuais do sistema (para todos os usuários) por: '+n.clientes.length+' cliente(s) e '+n.pedidos.length+' pedido(s).\nOs dados atuais ficam guardados nas cópias automáticas.'))return;
-  snapshot('antes de restaurar um backup');DB=n;salvar();ir('#/');
-}
 
 const ACTS={
   status:t=>{mudarStatus(+t.dataset.id,t.dataset.to,false);const v=safeVoltar(t.dataset.volta);if(v)ir('#'+v);else render()},
   apagar:t=>apagarCliente(+t.dataset.id),
-  imprimirPagina:()=>window.print(),
-  exportar:exportar,
-  restaurarSnap:t=>{const s=snapshots()[+t.dataset.i];if(!s)return;
-    if(!confirm('Restaurar a cópia de '+fmt(s.data)+'?\n\nOs dados atuais serão substituídos (e ficam guardados como cópia).'))return;
-    const n=normalizar(JSON.parse(s.dados));snapshot('antes de restaurar uma cópia');DB=n;salvar();ir('#/')}
+  imprimirPagina:()=>window.print()
 };
 const CHG={
   status:t=>{mudarStatus(+t.dataset.id,t.value,true);render()},
@@ -578,7 +530,7 @@ const CHG={
   imprimirFiltro:t=>ir('#/imprimir'+(t.value?'?status='+encodeURIComponent(t.value):''))
 };
 
-['status','apagar','exportar','restaurarSnap'].forEach(k=>{ACTS[k]=mut(ACTS[k])});
+['status','apagar'].forEach(k=>{ACTS[k]=mut(ACTS[k])});
 CHG.status=mut(CHG.status);
 
 const FORMS={
@@ -647,13 +599,11 @@ const FORMS={
 };
 
 Object.keys(FORMS).forEach(k=>{FORMS[k]=mut(FORMS[k])});
-const importarMut=mut(importarTexto);
 
 /* ======================= eventos globais ======================= */
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(t&&ACTS[t.dataset.act]){e.preventDefault();ACTS[t.dataset.act](t,e)}});
 document.addEventListener('change',e=>{
   const t=e.target;
-  if(t.id==='arq'){const fl=t.files[0];if(!fl)return;const r=new FileReader();r.onload=()=>importarMut(String(r.result));r.readAsText(fl);t.value='';return}
   if(t.dataset&&t.dataset.chg&&CHG[t.dataset.chg])CHG[t.dataset.chg](t);
 });
 document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.inp==='dica')atualizarDica();if(e.target.closest&&e.target.closest('form[data-form]'))formSujo=true});
@@ -714,7 +664,6 @@ async function entrar(){
     $('#btn-sair').hidden=false;return;
   }
   await migrarLocal();
-  carregarSnaps().then(()=>{if(DB&&parseHash().path==='/backup')render()});
   $('#btn-sair').hidden=false;nuvemStatus('☁ Salvo');
   render();
   if(!timer)timer=setInterval(checar,15000);
