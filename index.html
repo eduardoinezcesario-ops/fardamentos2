@@ -303,12 +303,11 @@ function vPainel(){
     l.forEach(p=>{if(!por[p.cliente_id]){por[p.cliente_id]=[];ordem.push(p.cliente_id)}por[p.cliente_id].push(p)});
     const itens=ordem.map(cid=>{const c=cli(cid)||{nome:'?',telefone:''},ps=por[cid],k=cid+'|'+s;
       const corpo=ps.map(p=>'<div class="ped">'+
-        '<a class="mut" style="float:right" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/')+'">✏ Editar</a>'+
         '<span class="mut" style="white-space:normal;overflow-wrap:anywhere">📝 '+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho),p.observacao].filter(Boolean).join(' · '))+'</span><br>'+
         (p.pendencia?'<span style="color:#facc15;font-weight:600;white-space:normal"><i class="dot"></i>Falta: '+esc(p.pendencia)+'</span><br>':'')+'<span class="mut">entrou '+dia(p.criado_em)+'</span><br>'+previsaoHTML(p,true)+
         '<div class="row" style="margin-top:6px">'+btnStatus(p,'/')+'</div></div>').join('');
       return '<details class="grp" data-k="'+k+'"'+(ABERTOS.has(k)?' open':'')+'><summary>'+(ps.some(x=>x.pendencia)||c.pendencia?'<i class="dot" title="Falta algo"></i>':'')+esc(c.nome)+(ps.length>1?' <span class="mut">('+ps.length+')</span>':'')+'</summary>'+
-        '<div class="corpo"><div class="mut" style="margin-bottom:8px">'+esc(c.telefone||'sem telefone')+' · <a href="#/clientes/'+cid+'">ver cadastro</a></div>'+(c.pendencia?'<div style="color:#facc15;font-weight:600;white-space:normal;margin-bottom:8px"><i class="dot"></i>Pendência do cliente: '+esc(c.pendencia)+'</div>':'')+corpo+'</div></details>'}).join('')||'<p class="mut">Nada aqui.</p>';
+        '<div class="corpo"><div class="mut" style="margin-bottom:8px">'+esc(c.telefone||'sem telefone')+' · <a href="#/clientes/'+cid+'">👁 Ver cadastro e todos os pedidos</a> · <a href="#/clientes/'+cid+'/editar">✏ Editar tudo</a></div>'+(c.pendencia?'<div style="color:#facc15;font-weight:600;white-space:normal;margin-bottom:8px"><i class="dot"></i>Pendência do cliente: '+esc(c.pendencia)+'</div>':'')+corpo+(pedidosDe(cid).filter(x=>x.status!==s).length?'<div class="mut" style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">Outros pedidos deste cliente:'+pedidosDe(cid).filter(x=>x.status!==s).map(x=>'<br>• '+esc([x.quantidade+'x '+x.item,x.tamanho&&('tam. '+x.tamanho)].filter(Boolean).join(' · '))+' — '+esc(x.status)+(x.pendencia?' 🟡':'')).join('')+'</div>':'')+'</div></details>'}).join('')||'<p class="mut">Nada aqui.</p>';
     return '<div class="card"><h2>'+esc(s)+' ('+l.length+')</h2>'+itens+'</div>';
   }).join('');
   const ent=DB.pedidos.filter(p=>p.status==='Entregue').sort((a,b)=>(b.entregue_em||'')<(a.entregue_em||'')?-1:1).slice(0,8);
@@ -342,6 +341,7 @@ function vClienteForm(c){
     '<div style="width:110px"><label>Tamanho</label><input name="tamanho_'+p.id+'" value="'+esc(p.tamanho)+'"></div>'+
     '<div style="width:90px"><label>Qtd.</label><input type="number" min="1" name="qtd_'+p.id+'" value="'+p.quantidade+'"></div></div>'+
     '<label>Descrição / observação do pedido</label><textarea name="obs_'+p.id+'" rows="2">'+esc(p.observacao)+'</textarea>'+
+    '<label>🟡 Tem alguma pendência neste pedido?</label><select name="pt_'+p.id+'" data-chg="pendTem" data-box="pb_'+p.id+'"><option value="nao">Não</option><option value="sim"'+(p.pendencia?' selected':'')+'>Sim</option></select><div id="pb_'+p.id+'" style="display:'+(p.pendencia?'block':'none')+'"><label>Qual é a pendência?</label><input name="pd_'+p.id+'" maxlength="200" value="'+esc(p.pendencia||'')+'"></div>'+
     '<div class="row"><div class="sp"><label>Entrada</label><input type="date" name="entrada_'+p.id+'" value="'+esc((p.criado_em||'').slice(0,10))+'"></div>'+
     '<div class="sp"><label>Previsão de entrega</label><input type="date" name="previsao_'+p.id+'" value="'+esc(p.previsao_entrega||'')+'"></div>'+
     (p.status==='Entregue'?'<div class="sp"><label>Entregue em</label><input type="datetime-local" name="entregue_'+p.id+'" value="'+dtl(p.entregue_em)+'"></div>':'')+
@@ -560,7 +560,7 @@ const ACTS={
   imprimirPagina:()=>window.print()
 };
 const CHG={
-  pendTem:t=>{$('#pendbox').style.display=t.value==='sim'?'block':'none'},
+  pendTem:t=>{$('#'+(t.dataset.box||'pendbox')).style.display=t.value==='sim'?'block':'none'},
   status:t=>{mudarStatus(+t.dataset.id,t.value,true);render()},
   itemSel:t=>{$('#outro').style.display=t.value==='Outro'?'block':'none'},
   imprimirFiltro:t=>ir('#/imprimir'+(t.value?'?status='+encodeURIComponent(t.value):''))
@@ -591,16 +591,17 @@ const FORMS={
     const ps=pedidosDe(id),novos={};
     try{
       ps.forEach(p=>{const i=p.id,g=n=>f.elements[n+'_'+i];
-        const n={item:clean(g('item').value)||p.item,tamanho:clean(g('tamanho').value),quantidade:qtdNum(g('qtd').value),observacao:g('obs').value.trim(),
+        const n={item:clean(g('item').value)||p.item,tamanho:clean(g('tamanho').value),quantidade:qtdNum(g('qtd').value),observacao:g('obs').value.trim(),pendencia:(g('pt').value==='sim'?g('pd').value.trim():''),
           criado_em:entradaDe(g('entrada').value,p.criado_em),previsao_entrega:deDia(g('previsao').value)||'',
           entregue_em:p.status==='Entregue'?dtlEdit(g('entregue').value,p.entregue_em):p.entregue_em};
+        if(g('pt').value==='sim'&&!n.pendencia)throw new Error('pend');
         novos[i]=n});
-    }catch(e){return erroForm('Data ou quantidade inválida. Confira os campos.')}
+    }catch(e){return erroForm(e.message==='pend'?'Descreva qual é a pendência do pedido.':'Data ou quantidade inválida. Confira os campos.')}
     const mudou=diff(c,v,{nome:'Nome',telefone:'Telefone',observacao:'Obs.',pendencia:'Pendência'});
     if(mudou){c.nome=v.nome;c.telefone=v.telefone;c.observacao=v.observacao;c.pendencia=v.pendencia;log('Cadastro editado',mudou,id,null)}
-    const rot={item:'Item',tamanho:'Tamanho',quantidade:'Qtd.',observacao:'Descrição/obs.',criado_em:'Data de entrada',previsao_entrega:'Previsão de entrega',entregue_em:'Data da entrega'};
+    const rot={item:'Item',tamanho:'Tamanho',quantidade:'Qtd.',observacao:'Descrição/obs.',pendencia:'Pendência',criado_em:'Data de entrada',previsao_entrega:'Previsão de entrega',entregue_em:'Data da entrega'};
     ps.forEach(p=>{const n=novos[p.id],m=diff(p,n,rot);
-      if(m){p.item=n.item;p.tamanho=n.tamanho;p.quantidade=n.quantidade;p.observacao=n.observacao;p.criado_em=n.criado_em;p.previsao_entrega=n.previsao_entrega||null;p.entregue_em=n.entregue_em||null;p.atualizado_em=agora();
+      if(m){p.item=n.item;p.tamanho=n.tamanho;p.quantidade=n.quantidade;p.observacao=n.observacao;p.pendencia=n.pendencia;p.criado_em=n.criado_em;p.previsao_entrega=n.previsao_entrega||null;p.entregue_em=n.entregue_em||null;p.atualizado_em=agora();
         log('Pedido editado',p.item+': '+m,id,p.id)}});
     salvar();ir('#/clientes/'+id);
   },
@@ -653,7 +654,7 @@ document.addEventListener('change',e=>{
 document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.inp==='dica')atualizarDica();if(e.target.closest&&e.target.closest('form[data-form]'))formSujo=true});
 document.addEventListener('submit',e=>{const f=e.target;if(f.dataset&&FORMS[f.dataset.form]){e.preventDefault();FORMS[f.dataset.form](f)}});
 document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.k){if(d.open)ABERTOS.add(d.dataset.k);else ABERTOS.delete(d.dataset.k)}},true);
-window.addEventListener('hashchange',render);
+window.addEventListener('hashchange',()=>{if(!/[?&]q=/.test(location.hash)){const b=$('#busca-topo'),sg=$('#sug');if(b)b.value='';if(sg){sg.hidden=true;sg.innerHTML=''}}render()});
 $('#btn-tema').addEventListener('click',()=>{
   const h=document.documentElement,n=h.getAttribute('data-tema')==='claro'?'escuro':'claro';
   h.setAttribute('data-tema',n);try{localStorage.setItem('tema',n)}catch(e){}
