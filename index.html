@@ -178,7 +178,7 @@ function normalizar(d){
   const mx=a=>a.reduce((m,x)=>Math.max(m,+x.id||0),0);
   const s=d.seq||{};
   o.seq={cliente:Math.max(+s.cliente||0,mx(o.clientes)),pedido:Math.max(+s.pedido||0,mx(o.pedidos)),hist:Math.max(+s.hist||0,mx(o.historico))};
-  o.clientes.forEach(c=>{c.id=+c.id;c.nome=c.nome||'';c.telefone=c.telefone||'';c.observacao=c.observacao||'';c.criado_em=c.criado_em||agora()});
+  o.clientes.forEach(c=>{c.id=+c.id;c.nome=c.nome||'';c.telefone=c.telefone||'';c.observacao=c.observacao||'';c.pendencia=c.pendencia||'';c.criado_em=c.criado_em||agora()});
   o.pedidos.forEach(p=>{p.id=+p.id;p.cliente_id=+p.cliente_id;p.item=p.item||'';p.tamanho=p.tamanho||'';p.quantidade=+p.quantidade||1;p.observacao=p.observacao||'';p.pendencia=p.pendencia||'';p.status=STATUS.indexOf(p.status)>-1?p.status:'Recebido';p.criado_em=p.criado_em||agora();p.atualizado_em=p.atualizado_em||p.criado_em;p.entregue_em=p.entregue_em||null;p.previsao_entrega=p.previsao_entrega||null});
   o.historico.forEach(h=>{h.id=+h.id;h.cliente_id=h.cliente_id==null?null:+h.cliente_id;h.pedido_id=h.pedido_id==null?null:+h.pedido_id;h.detalhe=h.detalhe||'';h.data=h.data||agora()});
   return o;
@@ -307,8 +307,8 @@ function vPainel(){
         '<span class="mut" style="white-space:normal;overflow-wrap:anywhere">📝 '+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho),p.observacao].filter(Boolean).join(' · '))+'</span><br>'+
         (p.pendencia?'<span style="color:#facc15;font-weight:600;white-space:normal"><i class="dot"></i>Falta: '+esc(p.pendencia)+'</span><br>':'')+'<span class="mut">entrou '+dia(p.criado_em)+'</span><br>'+previsaoHTML(p,true)+
         '<div class="row" style="margin-top:6px">'+btnStatus(p,'/')+'</div></div>').join('');
-      return '<details class="grp" data-k="'+k+'"'+(ABERTOS.has(k)?' open':'')+'><summary>'+(ps.some(x=>x.pendencia)?'<i class="dot" title="Falta algo"></i>':'')+esc(c.nome)+(ps.length>1?' <span class="mut">('+ps.length+')</span>':'')+'</summary>'+
-        '<div class="corpo"><div class="mut" style="margin-bottom:8px">'+esc(c.telefone||'sem telefone')+' · <a href="#/clientes/'+cid+'">ver cadastro</a></div>'+corpo+'</div></details>'}).join('')||'<p class="mut">Nada aqui.</p>';
+      return '<details class="grp" data-k="'+k+'"'+(ABERTOS.has(k)?' open':'')+'><summary>'+(ps.some(x=>x.pendencia)||c.pendencia?'<i class="dot" title="Falta algo"></i>':'')+esc(c.nome)+(ps.length>1?' <span class="mut">('+ps.length+')</span>':'')+'</summary>'+
+        '<div class="corpo"><div class="mut" style="margin-bottom:8px">'+esc(c.telefone||'sem telefone')+' · <a href="#/clientes/'+cid+'">ver cadastro</a></div>'+(c.pendencia?'<div style="color:#facc15;font-weight:600;white-space:normal;margin-bottom:8px"><i class="dot"></i>Pendência do cliente: '+esc(c.pendencia)+'</div>':'')+corpo+'</div></details>'}).join('')||'<p class="mut">Nada aqui.</p>';
     return '<div class="card"><h2>'+esc(s)+' ('+l.length+')</h2>'+itens+'</div>';
   }).join('');
   const ent=DB.pedidos.filter(p=>p.status==='Entregue').sort((a,b)=>(b.entregue_em||'')<(a.entregue_em||'')?-1:1).slice(0,8);
@@ -323,7 +323,7 @@ function vClientes(q){
   const t=q&&q.get('q')||'';
   const linhas=l.map(c=>{
     const ps=c.pedidos.map(p=>'<div>'+p.quantidade+'x '+esc(p.item)+' '+esc(p.tamanho)+' '+badge(p.status)+(p.observacao?'<br><span class="mut">📝 '+esc(p.observacao)+'</span>':'')+'</div>').join('')||'<span class="mut">sem pedidos</span>';
-    return '<tr data-busca="'+esc(c._h)+'"><td><a href="#/clientes/'+c.id+'"><b>'+esc(c.nome)+'</b></a></td><td>'+esc(c.telefone)+'</td><td>'+ps+'</td><td>'+c.abertos+'</td>'+
+    return '<tr data-busca="'+esc(c._h)+'"><td><a href="#/clientes/'+c.id+'"><b>'+(c.pendencia?'<i class="dot"></i>':'')+esc(c.nome)+'</b></a></td><td>'+esc(c.telefone)+'</td><td>'+ps+'</td><td>'+c.abertos+'</td>'+
       '<td><div class="row"><a class="btn sm sec" href="#/clientes/'+c.id+'/editar">✏ Editar</a><a class="btn sm sec" href="#/pedidos/novo?cliente_id='+c.id+'">+ pedido</a>'+
       '<button class="btn sm danger" title="Apagar cliente" data-act="apagar" data-id="'+c.id+'">🗑</button></div></td></tr>';
   }).join('')||'<tr><td colspan="5" class="mut">Nenhum cliente.</td></tr>';
@@ -351,6 +351,8 @@ function vClienteForm(c){
     '<label>Nome *</label><input name="nome" required value="'+esc(novo?'':c.nome)+'">'+
     '<label>Telefone</label><input name="telefone" value="'+esc(novo?'':c.telefone)+'">'+
     '<label>Observação</label><textarea name="observacao" rows="3">'+esc(novo?'':c.observacao)+'</textarea>'+
+    '<label>🟡 Tem alguma pendência?</label><select name="pend_tem" data-chg="pendTem"><option value="nao">Não</option><option value="sim"'+(c&&c.pendencia?' selected':'')+'>Sim</option></select>'+
+    '<div id="pendbox" style="display:'+(c&&c.pendencia?'block':'none')+'"><label>Qual é a pendência? (descreva tudo)</label><textarea name="pend_txt" rows="3">'+esc(c?c.pendencia:'')+'</textarea></div>'+
     (novo?'':'<p class="mut">Os pedidos e o histórico deste cliente são mantidos. A alteração fica registrada com o valor antigo.</p>')+'</div>'+blocos+
     '<div class="row"><button class="btn">Salvar</button><a class="btn sec" href="'+(novo?'#/clientes':'#/clientes/'+c.id)+'">Cancelar</a></div></form>';
 }
@@ -367,7 +369,7 @@ function vClienteDetalhe(id){
   return '<div class="row"><h1 class="sp">'+esc(c.nome)+'</h1><a class="btn sec" href="#/clientes/'+c.id+'/editar">Editar cadastro</a>'+
     '<a class="btn sec" href="#/imprimir?cliente_id='+c.id+'">🖨 Imprimir ficha</a><a class="btn" href="#/pedidos/novo?cliente_id='+c.id+'">+ Novo pedido</a>'+
     '<button class="btn danger" data-act="apagar" data-id="'+c.id+'" title="Apagar cliente">🗑 Apagar</button></div>'+
-    '<div class="card"><b>Telefone:</b> '+esc(c.telefone||'—')+' &nbsp; <b>Cadastrado em:</b> '+fmt(c.criado_em)+(c.observacao?'<br><b>Obs.:</b> '+esc(c.observacao):'')+'</div>'+
+    '<div class="card"><b>Telefone:</b> '+esc(c.telefone||'—')+' &nbsp; <b>Cadastrado em:</b> '+fmt(c.criado_em)+(c.observacao?'<br><b>Obs.:</b> '+esc(c.observacao):'')+(c.pendencia?'<br><span style="color:#facc15;font-weight:600"><i class="dot"></i>Pendência: '+esc(c.pendencia)+'</span>':'')+'</div>'+
     '<div class="card"><h2>Pedidos</h2><table><tr><th>Item</th><th>Tam.</th><th>Qtd.</th><th>Status</th><th>Entrada</th><th>Previsão</th><th>Entregue em</th><th></th></tr>'+linhas+'</table></div>'+
     '<div class="card"><h2>Histórico do cliente</h2><table>'+hl+'</table></div>';
 }
@@ -393,11 +395,11 @@ function vPedidoForm(p,q){
     '<div class="row"><div class="sp"><label>Tamanho</label><input name="tamanho" value="'+esc(v.tamanho)+'"></div>'+
     '<div class="sp"><label>Quantidade</label><input name="quantidade" type="number" min="1" value="'+v.quantidade+'"></div></div>'+
     (novo?'<label>Situação do pedido (em qual coluna entra)</label><select name="status">'+STATUS.map(x=>'<option'+(x==='Recebido'?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>':'')+
-    '<div class="row"><div class="sp"><label>Data de entrada na loja</label><input type="date" name="criado_em" value="'+esc(v.criado_em)+'"></div>'+
-    '<div class="sp"><label>Previsão de entrega ao cliente</label><input type="date" name="previsao_entrega" value="'+esc(v.previsao_entrega)+'"></div></div>'+
-    (novo?'<p class="mut">A data de entrada já vem com o dia de hoje. As duas datas podem ser alteradas depois.</p>':'')+
+    '<div class="row">'+(novo?'':'<div class="sp"><label>Data de entrada na loja</label><input type="date" name="criado_em" value="'+esc(v.criado_em)+'"></div>')+
+    '<div class="sp"><label>Data de retirada (previsão)</label><input type="date" name="previsao_entrega" value="'+esc(v.previsao_entrega)+'"></div></div>'+
+    (novo?'<p class="mut">A data de entrada é salva automaticamente com o dia de hoje. A data de retirada pode ser alterada depois.</p>':'')+
     (!novo&&p.status==='Entregue'?'<label>Data e hora em que foi entregue ao cliente</label><input type="datetime-local" name="entregue_em" value="'+esc(v.entregue_em)+'">':'')+
-    '<label>🟡 Falta algo? (escreva o que está faltando; deixe em branco se não falta nada)</label><input name="pendencia" maxlength="200" value="'+esc(v.pendencia||'')+'">'+
+    '<label>🟡 Tem alguma pendência? Se tiver, descreva qual (deixe em branco se não)</label><input name="pendencia" maxlength="200" value="'+esc(v.pendencia||'')+'">'+
     '<label>Descrição / observação do pedido</label><textarea name="observacao" rows="3">'+esc(v.observacao)+'</textarea>'+
     (novo?'':'<p class="mut">Cada alteração fica registrada no histórico, com o valor antigo e o novo.</p>')+
     '<div class="row" style="margin-top:14px"><button class="btn">Salvar</button><a class="btn sec" href="#'+(voltar||(novo?'/pedidos':'/clientes/'+p.cliente_id))+'">Cancelar</a></div></form>';
@@ -462,11 +464,13 @@ let ultimoPath=null;
 function parseHash(){const h=(location.hash||'#/').slice(1)||'/';const i=h.indexOf('?');return{path:i<0?h:h.slice(0,i),q:new URLSearchParams(i<0?'':h.slice(i+1))}}
 function vPendencias(){
   const L=DB.pedidos.filter(p=>p.pendencia&&p.status!=='Entregue').sort((a,b)=>a.criado_em<b.criado_em?-1:1);
-  return '<h1>🟡 Pendências</h1><p class="mut">Pedidos que estão faltando algo. Quando resolver, clique em “Resolvido”.</p>'+(L.map(p=>{const c=cli(p.cliente_id)||{nome:'?',telefone:''};
+  const LC=DB.clientes.filter(c=>c.pendencia);
+  const cardCli=c=>'<div class="card"><div class="row" style="justify-content:space-between"><b><i class="dot"></i><a href="#/clientes/'+c.id+'" style="color:inherit">'+esc(c.nome)+'</a></b><span class="mut">Cliente · '+esc(c.telefone)+'</span></div><div style="color:#facc15;font-weight:600;white-space:normal;margin:6px 0">Pendência: '+esc(c.pendencia)+'</div><div class="row"><button class="btn" data-act="resolverCli" data-id="'+c.id+'">✔ Resolvido</button><a class="btn sec" href="#/clientes/'+c.id+'/editar">✏ Editar cadastro</a></div></div>';
+  return '<h1>🟡 Pendências</h1><p class="mut">Pedidos que estão faltando algo. Quando resolver, clique em “Resolvido”.</p>'+(LC.map(cardCli).join('')+L.map(p=>{const c=cli(p.cliente_id)||{nome:'?',telefone:''};
     return '<div class="card"><div class="row" style="justify-content:space-between"><b><i class="dot"></i><a href="#/clientes/'+c.id+'" style="color:inherit">'+esc(c.nome)+'</a></b><span class="mut">'+esc(p.status)+'</span></div>'+
     '<div class="mut" style="margin:4px 0">'+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho),p.observacao].filter(Boolean).join(' · '))+'</div>'+
     '<div style="color:#facc15;font-weight:600;white-space:normal">Falta: '+esc(p.pendencia)+'</div>'+
-    '<div class="row" style="margin-top:8px"><button class="btn" data-act="resolver" data-id="'+p.id+'">✔ Resolvido</button><a class="btn sec" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/pendencias')+'">✏ Editar</a></div></div>'}).join('')||'<div class="card mut">Nenhum pedido com pendência. 👍</div>');
+    '<div class="row" style="margin-top:8px"><button class="btn" data-act="resolver" data-id="'+p.id+'">✔ Resolvido</button><a class="btn sec" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/pendencias')+'">✏ Editar</a></div></div>'}).join('')||'<div class="card mut">Nenhuma pendência. 👍</div>');
 }
 function rota(path,q){
   let m;
@@ -496,7 +500,7 @@ function render(){
   try{html=rota(path,q)}catch(e){console.error(e);html='<div class="card erro"><b>Erro ao abrir esta tela.</b><br>'+esc(e.message)+'</div>'}
   $('#app').innerHTML=(path==='/imprimir'?'':bannerHTML())+html;
   $('#nomes').innerHTML=DB.clientes.map(c=>'<option value="'+esc(c.nome)+'">').join('');
-  const np=DB.pedidos.filter(p=>p.pendencia&&p.status!=='Entregue').length;const ne=$('#npend');if(ne)ne.textContent=np?String(np):'';
+  const np=DB.pedidos.filter(p=>p.pendencia&&p.status!=='Entregue').length+DB.clientes.filter(c=>c.pendencia).length;const ne=$('#npend');if(ne)ne.textContent=np?String(np):'';
   document.querySelectorAll('header nav a').forEach(a=>{const n=a.getAttribute('data-nav');a.classList.toggle('on',n===path||(n!=='/'&&path.indexOf(n+'/')===0&&n!=='/pedidos'&&n!=='/clientes'))});
   if(path!==ultimoPath){window.scrollTo(0,0);ultimoPath=path}
   depois(path);
@@ -549,18 +553,20 @@ function apagarCliente(id){
 }
 
 const ACTS={
+  resolverCli:t=>{const c=cli(+t.dataset.id);if(!c)return;log('Pendência resolvida','Faltava: '+c.pendencia,c.id,null);c.pendencia='';salvar();render()},
   resolver:t=>{const p=ped(+t.dataset.id);if(!p)return;log('Pendência resolvida','Faltava: '+p.pendencia,p.cliente_id,p.id);p.pendencia='';p.atualizado_em=agora();salvar();render()},
   status:t=>{mudarStatus(+t.dataset.id,t.dataset.to,false);const v=safeVoltar(t.dataset.volta);if(v)ir('#'+v);else render()},
   apagar:t=>apagarCliente(+t.dataset.id),
   imprimirPagina:()=>window.print()
 };
 const CHG={
+  pendTem:t=>{$('#pendbox').style.display=t.value==='sim'?'block':'none'},
   status:t=>{mudarStatus(+t.dataset.id,t.value,true);render()},
   itemSel:t=>{$('#outro').style.display=t.value==='Outro'?'block':'none'},
   imprimirFiltro:t=>ir('#/imprimir'+(t.value?'?status='+encodeURIComponent(t.value):''))
 };
 
-['status','apagar','resolver'].forEach(k=>{ACTS[k]=mut(ACTS[k])});
+['status','apagar','resolver','resolverCli'].forEach(k=>{ACTS[k]=mut(ACTS[k])});
 CHG.status=mut(CHG.status);
 
 const FORMS={
@@ -569,14 +575,17 @@ const FORMS={
     if(!nome)return erroForm('Informe o nome do cliente.');
     const dup=achaDup(nome);
     if(dup)return erroForm('Cliente já cadastrado. Não foi criado outro cadastro.<br>Cadastro existente: <a href="#/clientes/'+dup.id+'"><b>'+esc(dup.nome)+'</b></a> '+esc(dup.telefone)+' · <a href="#/pedidos/novo?cliente_id='+dup.id+'">lançar um pedido para ele</a>');
+    const pend=f.pend_tem.value==='sim'?f.pend_txt.value.trim():'';
+    if(f.pend_tem.value==='sim'&&!pend)return erroForm('Descreva qual é a pendência.');
     DB.seq.cliente++;
-    const c={id:DB.seq.cliente,nome:nome,telefone:f.telefone.value.trim(),observacao:f.observacao.value.trim(),criado_em:agora()};
-    DB.clientes.push(c);log('Cliente cadastrado',nome,c.id,null);salvar();ir('#/clientes/'+c.id);
+    const c={id:DB.seq.cliente,nome:nome,telefone:f.telefone.value.trim(),observacao:f.observacao.value.trim(),pendencia:pend,criado_em:agora()};
+    DB.clientes.push(c);log('Cliente cadastrado',nome+(pend?' · pendência: '+pend:''),c.id,null);salvar();ir('#/clientes/'+c.id);
   },
   clienteEditar:f=>{
     const id=+f.dataset.id,c=cli(id);if(!c)return;
-    const v={nome:clean(f.nome.value),telefone:f.telefone.value.trim(),observacao:f.observacao.value.trim()};
+    const v={nome:clean(f.nome.value),telefone:f.telefone.value.trim(),observacao:f.observacao.value.trim(),pendencia:f.pend_tem.value==='sim'?f.pend_txt.value.trim():''};
     if(!v.nome)return erroForm('Informe o nome do cliente.');
+    if(f.pend_tem.value==='sim'&&!v.pendencia)return erroForm('Descreva qual é a pendência.');
     const dup=achaDup(v.nome,id);
     if(dup)return erroForm('Já existe outro cliente com esse nome. Nada foi alterado.<br>Cadastro existente: <a href="#/clientes/'+dup.id+'"><b>'+esc(dup.nome)+'</b></a>');
     const ps=pedidosDe(id),novos={};
@@ -587,8 +596,8 @@ const FORMS={
           entregue_em:p.status==='Entregue'?dtlEdit(g('entregue').value,p.entregue_em):p.entregue_em};
         novos[i]=n});
     }catch(e){return erroForm('Data ou quantidade inválida. Confira os campos.')}
-    const mudou=diff(c,v,{nome:'Nome',telefone:'Telefone',observacao:'Obs.'});
-    if(mudou){c.nome=v.nome;c.telefone=v.telefone;c.observacao=v.observacao;log('Cadastro editado',mudou,id,null)}
+    const mudou=diff(c,v,{nome:'Nome',telefone:'Telefone',observacao:'Obs.',pendencia:'Pendência'});
+    if(mudou){c.nome=v.nome;c.telefone=v.telefone;c.observacao=v.observacao;c.pendencia=v.pendencia;log('Cadastro editado',mudou,id,null)}
     const rot={item:'Item',tamanho:'Tamanho',quantidade:'Qtd.',observacao:'Descrição/obs.',criado_em:'Data de entrada',previsao_entrega:'Previsão de entrega',entregue_em:'Data da entrega'};
     ps.forEach(p=>{const n=novos[p.id],m=diff(p,n,rot);
       if(m){p.item=n.item;p.tamanho=n.tamanho;p.quantidade=n.quantidade;p.observacao=n.observacao;p.criado_em=n.criado_em;p.previsao_entrega=n.previsao_entrega||null;p.entregue_em=n.entregue_em||null;p.atualizado_em=agora();
@@ -599,7 +608,7 @@ const FORMS={
     const nome=clean(f.cliente_nome.value);
     if(!nome)return erroForm('Informe o nome do cliente.');
     let entrada,prev,qtd;
-    try{entrada=entradaDe(f.criado_em.value,null);prev=deDia(f.previsao_entrega.value);qtd=qtdNum(f.quantidade.value)}
+    try{entrada=entradaDe(f.criado_em?f.criado_em.value:'',null);prev=deDia(f.previsao_entrega.value);qtd=qtdNum(f.quantidade.value)}
     catch(e){return erroForm('Data ou quantidade inválida.')}
     let item=clean(f.item.value);
     if(item==='Outro'&&clean(f.item_outro.value))item=clean(f.item_outro.value);
