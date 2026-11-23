@@ -88,6 +88,7 @@ details.grp .ped+.ped{border-top:1px solid var(--line);margin-top:10px;padding-t
 .marca-img{height:56px;width:auto;display:block}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#facc15;box-shadow:0 0 0 2px rgba(250,204,21,.35);margin-right:6px;vertical-align:middle;flex:none}
 #npend:not(:empty){background:#facc15;color:#000;border-radius:99px;padding:0 7px;font-size:11px;font-weight:700;margin-left:5px}
+#nhoje:not(:empty),#namanha:not(:empty){background:rgba(255,255,255,.25);color:#fff;border-radius:99px;padding:0 7px;font-size:11px;margin-left:5px}
 </style>
 <script>
 try{var _t=localStorage.getItem('tema');if(_t)document.documentElement.setAttribute('data-tema',_t)}catch(e){}
@@ -105,6 +106,8 @@ try{var _t=localStorage.getItem('tema');if(_t)document.documentElement.setAttrib
       <a href="#/" data-nav="/">Painel</a>
       <a href="#/clientes" data-nav="/clientes">Clientes</a>
       <a href="#/pedidos" data-nav="/pedidos">Editar pedido</a>
+      <a href="#/hoje" data-nav="/hoje">Serviços do dia<span id="nhoje"></span></a>
+      <a href="#/amanha" data-nav="/amanha">Próximo serviço<span id="namanha"></span></a>
       <a href="#/pendencias" data-nav="/pendencias">Pendências<span id="npend"></span></a>
       <a href="#/imprimir" data-nav="/imprimir">Imprimir lista</a>
       <a href="#/historico" data-nav="/historico">Histórico geral</a>
@@ -462,6 +465,22 @@ function v404(){return '<div class="card"><h1>Não encontrado</h1><p>Esse cadast
 /* ======================= roteamento ======================= */
 let ultimoPath=null;
 function parseHash(){const h=(location.hash||'#/').slice(1)||'/';const i=h.indexOf('?');return{path:i<0?h:h.slice(0,i),q:new URLSearchParams(i<0?'':h.slice(i+1))}}
+const somaDia=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const doDia=iso=>DB.pedidos.filter(p=>(p.previsao_entrega||'').slice(0,10)===iso);
+function vServicos(iso,titulo,path){
+  const L=doDia(iso).sort((a,b)=>a.criado_em<b.criado_em?-1:1),por={},ordem=[];
+  L.forEach(p=>{if(!por[p.cliente_id]){por[p.cliente_id]=[];ordem.push(p.cliente_id)}por[p.cliente_id].push(p)});
+  ordem.sort((a,b)=>((cli(a)||{}).nome||'').localeCompare((cli(b)||{}).nome||''));
+  const ext=new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+  return '<h1>'+titulo+'</h1><p class="mut">'+esc(ext)+' · '+L.length+' pedido(s) de '+ordem.length+' cliente(s) · data de retirada</p>'+(ordem.map(cid=>{const c=cli(cid)||{nome:'?',telefone:''},ps=por[cid];
+    return '<div class="card"><div class="row" style="justify-content:space-between"><b>'+(c.pendencia||ps.some(x=>x.pendencia)?'<i class="dot"></i>':'')+'<a href="#/clientes/'+cid+'" style="color:inherit">'+esc(c.nome)+'</a></b><span class="mut">'+esc(c.telefone)+'</span></div>'+
+    (c.pendencia?'<div style="color:#facc15;font-weight:600;margin-top:6px"><i class="dot"></i>Pendência do cliente: '+esc(c.pendencia)+'</div>':'')+
+    ps.map(p=>'<div style="margin-top:8px;border-top:1px solid var(--line);padding-top:8px"><div>• <b>'+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho)].filter(Boolean).join(' · '))+'</b> <span class="mut">— '+esc(p.status)+'</span></div>'+
+      (p.observacao?'<ul class="mut" style="margin:4px 0 0;padding-left:20px">'+p.observacao.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
+      (p.pendencia?'<div style="color:#facc15;font-weight:600"><i class="dot"></i>Falta: '+esc(p.pendencia)+'</div>':'')+
+      '<div class="row" style="margin-top:6px">'+btnStatus(p,path)+'</div></div>').join('')+
+    '<div class="mut" style="margin-top:8px"><a href="#/clientes/'+cid+'">👁 Ver cadastro e todos os pedidos</a> · <a href="#/clientes/'+cid+'/editar">✏ Editar tudo</a></div></div>'}).join('')||'<div class="card mut">Nenhum serviço com retirada neste dia.</div>');
+}
 function vPendencias(){
   const L=DB.pedidos.filter(p=>p.pendencia&&p.status!=='Entregue').sort((a,b)=>a.criado_em<b.criado_em?-1:1);
   const LC=DB.clientes.filter(c=>c.pendencia);
@@ -475,6 +494,8 @@ function vPendencias(){
 function rota(path,q){
   let m;
   if(path==='/pendencias')return vPendencias();
+  if(path==='/hoje')return vServicos(hoje(),'📅 Serviços do dia','/hoje');
+  if(path==='/amanha')return vServicos(somaDia(hoje(),1),'⏭ Próximo serviço','/amanha');
   if(path==='/')return vPainel();
   if(path==='/clientes')return vClientes(q);
   if(path==='/clientes/novo')return vClienteForm(null);
@@ -501,6 +522,7 @@ function render(){
   $('#app').innerHTML=(path==='/imprimir'?'':bannerHTML())+html;
   $('#nomes').innerHTML=DB.clientes.map(c=>'<option value="'+esc(c.nome)+'">').join('');
   const np=DB.pedidos.filter(p=>p.pendencia&&p.status!=='Entregue').length+DB.clientes.filter(c=>c.pendencia).length;const ne=$('#npend');if(ne)ne.textContent=np?String(np):'';
+  const nh=doDia(hoje()).length,nm=doDia(somaDia(hoje(),1)).length,eh=$('#nhoje'),em=$('#namanha');if(eh)eh.textContent=nh?String(nh):'';if(em)em.textContent=nm?String(nm):'';
   document.querySelectorAll('header nav a').forEach(a=>{const n=a.getAttribute('data-nav');a.classList.toggle('on',n===path||(n!=='/'&&path.indexOf(n+'/')===0&&n!=='/pedidos'&&n!=='/clientes'))});
   if(path!==ultimoPath){window.scrollTo(0,0);ultimoPath=path}
   depois(path);
