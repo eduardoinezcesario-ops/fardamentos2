@@ -111,6 +111,32 @@ header nav a{display:inline-flex;align-items:center;gap:6px;padding:12px 9px;bor
 header nav a:hover{background:rgba(255,255,255,.09);color:#fff;border-color:transparent}
 header nav a.on{background:rgba(255,255,255,.14);color:#fff;border-bottom-color:#fff}
 @media(max-width:760px){.hn{overflow-x:auto}header nav{flex-wrap:nowrap}.marca-img{height:54px}.ht{font-size:18px}.hs{flex:1 1 100%}}
+:root{--pend:#facc15;--bg:#0e1118;--card:#161a23;--ink:#e6e9f0;--mut:#9aa3b5;--line:#262c3a;--pri:#4f46e5;--pri2:#222648;--pri2t:#c7d2fe;--inp:#0f1219;--item:#12161e;--link:#a5b4fc;--b3b:#242a37;--b3t:#a3acbd;--sh:rgba(0,0,0,.5)}
+:root[data-tema=claro]{--pend:#b45309;--bg:#f3f4f8;--card:#fff;--ink:#111827;--mut:#6b7280;--line:#e3e6ee;--pri:#4f46e5;--pri2:#eef0ff;--pri2t:#4338ca;--inp:#fff;--item:#f8f9fc;--link:#4338ca;--b3b:#eceef3;--b3t:#6b7280;--sh:rgba(15,23,42,.14)}
+body{font:15px/1.5 Inter,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+main{margin:26px auto}
+h1{font-size:24px;font-weight:700;letter-spacing:-.01em;margin:0 0 16px;display:flex;align-items:center;gap:10px}
+h1 .ic{width:26px;height:26px;color:var(--link)}h2{font-weight:700}
+.card,.stat{border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 8px 20px -12px var(--sh)}
+.card{padding:18px}.stat b{font-size:30px;font-weight:800}
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:9px 16px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:filter .15s,transform .05s}
+.btn:hover{filter:brightness(1.1)}.btn:active{transform:translateY(1px)}
+.btn.sec{border:1px solid var(--line);box-shadow:none}.btn.danger{box-shadow:none}
+.btn.sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.btn .ic{width:16px;height:16px}.mut .ic,a .ic{width:15px;height:15px}.ic{vertical-align:-3px}
+.btn:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid #818cf8;outline-offset:2px}
+input,select,textarea{border-radius:10px;padding:10px 12px;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(99,102,241,.28)}
+label{font-weight:500}
+table{border-collapse:separate;border-spacing:0}
+th,td{padding:11px 12px}
+th{background:var(--item);font-weight:600;font-size:11.5px}th:first-child{border-top-left-radius:10px}th:last-child{border-top-right-radius:10px}
+tbody tr:hover td{background:var(--item)}
+.badge{padding:3px 11px;letter-spacing:.01em}
+.item{border-radius:12px}
+details.grp{border-radius:12px}details.grp>summary{padding:12px 14px;border-radius:12px}details.grp>summary:hover{background:var(--card)}
+.sug{border-radius:12px}a{text-underline-offset:3px}
+::selection{background:rgba(99,102,241,.35)}*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 </style>
 <script>
 try{var _t=localStorage.getItem('tema');if(_t)document.documentElement.setAttribute('data-tema',_t)}catch(e){}
@@ -170,6 +196,19 @@ const MAX_SNAP=10;
 
 /* ======================= utilitários ======================= */
 const $=s=>document.querySelector(s);
+const IC=d=>'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+d+'</svg>';
+const ICO={
+print:IC('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>'),
+eye:IC('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>'),
+edit:IC('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>'),
+trash:IC('<path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 11v6M14 11v6"/>'),
+ok:IC('<path d="m5 12 5 5L20 7"/>'),
+note:IC('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>'),
+cal:IC('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
+hoje:IC('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/>'),
+amanha:IC('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 16h8m-3-3 3 3-3 3"/>'),
+pend:IC('<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>'),
+warn:IC('<path d="m10.3 3.9-8.5 14.7A2 2 0 0 0 3.5 21.5h17a2 2 0 0 0 1.7-2.9L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>')};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
 function agora(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())}
@@ -301,9 +340,9 @@ function listaClientes(q){
 const badge=s=>'<span class="badge b'+BADGE[s]+'">'+esc(s)+'</span>';
 const atrasado=p=>!!(p.previsao_entrega&&p.status!=='Entregue'&&p.previsao_entrega<hoje());
 function previsaoHTML(p,comIcone){
-  if(!p.previsao_entrega)return comIcone?'<span class="mut">📅 sem data prevista</span>':'—';
-  if(atrasado(p))return '<span class="late">'+(comIcone?'📅 entrega prevista ':'')+dia(p.previsao_entrega)+' · ATRASADO</span>';
-  return comIcone?'<span class="mut">📅 entrega prevista '+dia(p.previsao_entrega)+'</span>':dia(p.previsao_entrega);
+  if(!p.previsao_entrega)return comIcone?'<span class="mut">'+ICO.cal+' sem data prevista</span>':'—';
+  if(atrasado(p))return '<span class="late">'+(comIcone?ICO.cal+' entrega prevista ':'')+dia(p.previsao_entrega)+' · ATRASADO</span>';
+  return comIcone?'<span class="mut">'+ICO.cal+' entrega prevista '+dia(p.previsao_entrega)+'</span>':dia(p.previsao_entrega);
 }
 const lnkVoltar=(path)=>'?voltar='+encodeURIComponent(path);
 function avisoApagar(nome,total,abertos){
@@ -329,16 +368,16 @@ function vPainel(){
     l.forEach(p=>{if(!por[p.cliente_id]){por[p.cliente_id]=[];ordem.push(p.cliente_id)}por[p.cliente_id].push(p)});
     const itens=ordem.map(cid=>{const c=cli(cid)||{nome:'?',telefone:''},ps=por[cid],k=cid+'|'+s;
       const corpo=ps.map(p=>'<div class="ped">'+
-        '<span class="mut" style="white-space:normal;overflow-wrap:anywhere">📝 '+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho),p.observacao].filter(Boolean).join(' · '))+'</span><br>'+
-        (p.pendencia?'<span style="color:#facc15;font-weight:600;white-space:normal"><i class="dot"></i>Falta: '+esc(p.pendencia)+'</span><br>':'')+'<span class="mut">entrou '+dia(p.criado_em)+'</span><br>'+previsaoHTML(p,true)+
+        '<span class="mut" style="white-space:normal;overflow-wrap:anywhere">'+ICO.note+' '+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho),p.observacao].filter(Boolean).join(' · '))+'</span><br>'+
+        (p.pendencia?'<span style="color:var(--pend);font-weight:600;white-space:normal"><i class="dot"></i>Falta: '+esc(p.pendencia)+'</span><br>':'')+'<span class="mut">entrou '+dia(p.criado_em)+'</span><br>'+previsaoHTML(p,true)+
         '<div class="row" style="margin-top:6px">'+btnStatus(p,'/')+'</div></div>').join('');
       return '<details class="grp" data-k="'+k+'"'+(ABERTOS.has(k)?' open':'')+'><summary>'+(ps.some(x=>x.pendencia)||c.pendencia?'<i class="dot" title="Falta algo"></i>':'')+esc(c.nome)+(ps.length>1?' <span class="mut">('+ps.length+')</span>':'')+'</summary>'+
-        '<div class="corpo"><div class="mut" style="margin-bottom:8px">'+esc(c.telefone||'sem telefone')+' · <a href="#/clientes/'+cid+'">👁 Ver cadastro e todos os pedidos</a> · <a href="#/clientes/'+cid+'/editar">✏ Editar tudo</a></div>'+(c.pendencia?'<div style="color:#facc15;font-weight:600;white-space:normal;margin-bottom:8px"><i class="dot"></i>Pendência do cliente: '+esc(c.pendencia)+'</div>':'')+corpo+(pedidosDe(cid).filter(x=>x.status!==s).length?'<div class="mut" style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">Outros pedidos deste cliente:'+pedidosDe(cid).filter(x=>x.status!==s).map(x=>'<br>• '+esc([x.quantidade+'x '+x.item,x.tamanho&&('tam. '+x.tamanho)].filter(Boolean).join(' · '))+' — '+esc(x.status)+(x.pendencia?' 🟡':'')).join('')+'</div>':'')+'</div></details>'}).join('')||'<p class="mut">Nada aqui.</p>';
+        '<div class="corpo"><div class="mut" style="margin-bottom:8px">'+esc(c.telefone||'sem telefone')+' · <a href="#/clientes/'+cid+'">'+ICO.eye+' Ver cadastro e todos os pedidos</a> · <a href="#/clientes/'+cid+'/editar">'+ICO.edit+' Editar tudo</a></div>'+(c.pendencia?'<div style="color:var(--pend);font-weight:600;white-space:normal;margin-bottom:8px"><i class="dot"></i>Pendência do cliente: '+esc(c.pendencia)+'</div>':'')+corpo+(pedidosDe(cid).filter(x=>x.status!==s).length?'<div class="mut" style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">Outros pedidos deste cliente:'+pedidosDe(cid).filter(x=>x.status!==s).map(x=>'<br>• '+esc([x.quantidade+'x '+x.item,x.tamanho&&('tam. '+x.tamanho)].filter(Boolean).join(' · '))+' — '+esc(x.status)+(x.pendencia?' 🟡':'')).join('')+'</div>':'')+'</div></details>'}).join('')||'<p class="mut">Nada aqui.</p>';
     return '<div class="card"><h2>'+esc(s)+' ('+l.length+')</h2>'+itens+'</div>';
   }).join('');
   const ent=DB.pedidos.filter(p=>p.status==='Entregue').sort((a,b)=>(b.entregue_em||'')<(a.entregue_em||'')?-1:1).slice(0,8);
   const entHTML=ent.map(p=>{const c=cli(p.cliente_id)||{nome:'?'};
-    return '<tr><td><a href="#/clientes/'+p.cliente_id+'">'+esc(c.nome)+'</a></td><td>'+p.quantidade+'x '+esc(p.item)+' '+esc(p.tamanho)+'</td><td>'+fmt(p.entregue_em)+' <a class="mut" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/')+'">✏ editar</a></td></tr>'}).join('')||'<tr><td colspan="3" class="mut">Nenhuma entrega registrada.</td></tr>';
+    return '<tr><td><a href="#/clientes/'+p.cliente_id+'">'+esc(c.nome)+'</a></td><td>'+p.quantidade+'x '+esc(p.item)+' '+esc(p.tamanho)+'</td><td>'+fmt(p.entregue_em)+' <a class="mut" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/')+'">'+ICO.edit+' editar</a></td></tr>'}).join('')||'<tr><td colspan="3" class="mut">Nenhuma entrega registrada.</td></tr>';
   return '<div class="stats">'+kpis+'</div><div class="grid g3">'+cols+'</div>'+
     '<div class="card"><h2>Últimas entregas</h2><table><tr><th>Cliente</th><th>Item</th><th>Entregue em</th></tr>'+entHTML+'</table></div>';
 }
@@ -347,13 +386,13 @@ function vClientes(q){
   const l=listaClientes('');
   const t=q&&q.get('q')||'';
   const linhas=l.map(c=>{
-    const ps=c.pedidos.map(p=>'<div>'+p.quantidade+'x '+esc(p.item)+' '+esc(p.tamanho)+' '+badge(p.status)+(p.observacao?'<br><span class="mut">📝 '+esc(p.observacao)+'</span>':'')+'</div>').join('')||'<span class="mut">sem pedidos</span>';
+    const ps=c.pedidos.map(p=>'<div>'+p.quantidade+'x '+esc(p.item)+' '+esc(p.tamanho)+' '+badge(p.status)+(p.observacao?'<br><span class="mut">'+ICO.note+' '+esc(p.observacao)+'</span>':'')+'</div>').join('')||'<span class="mut">sem pedidos</span>';
     return '<tr data-busca="'+esc(c._h)+'"><td><a href="#/clientes/'+c.id+'"><b>'+(c.pendencia?'<i class="dot"></i>':'')+esc(c.nome)+'</b></a></td><td>'+esc(c.telefone)+'</td><td>'+ps+'</td><td>'+c.abertos+'</td>'+
-      '<td><div class="row"><a class="btn sm sec" href="#/clientes/'+c.id+'/editar">✏ Editar</a><a class="btn sm sec" href="#/pedidos/novo?cliente_id='+c.id+'">+ pedido</a>'+
-      '<button class="btn sm danger" title="Apagar cliente" data-act="apagar" data-id="'+c.id+'">🗑</button></div></td></tr>';
+      '<td><div class="row"><a class="btn sm sec" href="#/clientes/'+c.id+'/editar">'+ICO.edit+' Editar</a><a class="btn sm sec" href="#/pedidos/novo?cliente_id='+c.id+'">+ pedido</a>'+
+      '<button class="btn sm danger" title="Apagar cliente" data-act="apagar" data-id="'+c.id+'">'+ICO.trash+'</button></div></td></tr>';
   }).join('')||'<tr><td colspan="5" class="mut">Nenhum cliente.</td></tr>';
   return '<div class="row"><h1 class="sp">Clientes</h1><a class="btn" href="#/clientes/novo">+ Novo cliente</a></div>'+
-    '<div class="card row"><input id="filtro" value="'+esc(t)+'" placeholder="🔍 Digite qualquer parte do nome, telefone ou do pedido — a lista filtra enquanto você digita" style="max-width:680px" autocomplete="off"><span class="mut" id="cont"></span></div>'+
+    '<div class="card row"><input id="filtro" value="'+esc(t)+'" placeholder="Digite qualquer parte do nome, telefone ou do pedido — a lista filtra enquanto você digita" style="max-width:680px" autocomplete="off"><span class="mut" id="cont"></span></div>'+
     '<div class="card"><table id="tab"><tr><th>Nome</th><th>Telefone</th><th>Pedidos (descrição)</th><th>Em aberto</th><th></th></tr>'+linhas+
     '<tr id="nada" style="display:none"><td colspan="5" class="mut">Nenhum cliente encontrado para essa busca.</td></tr></table></div>';
 }
@@ -367,7 +406,7 @@ function vClienteForm(c){
     '<div style="width:110px"><label>Tamanho</label><input name="tamanho_'+p.id+'" value="'+esc(p.tamanho)+'"></div>'+
     '<div style="width:90px"><label>Qtd.</label><input type="number" min="1" name="qtd_'+p.id+'" value="'+p.quantidade+'"></div></div>'+
     '<label>Descrição / observação do pedido</label><textarea name="obs_'+p.id+'" rows="2">'+esc(p.observacao)+'</textarea>'+
-    '<label>🟡 Tem alguma pendência neste pedido?</label><select name="pt_'+p.id+'" data-chg="pendTem" data-box="pb_'+p.id+'"><option value="nao">Não</option><option value="sim"'+(p.pendencia?' selected':'')+'>Sim</option></select><div id="pb_'+p.id+'" style="display:'+(p.pendencia?'block':'none')+'"><label>Qual é a pendência?</label><input name="pd_'+p.id+'" maxlength="200" value="'+esc(p.pendencia||'')+'"></div>'+
+    '<label><i class="dot"></i>Tem alguma pendência neste pedido?</label><select name="pt_'+p.id+'" data-chg="pendTem" data-box="pb_'+p.id+'"><option value="nao">Não</option><option value="sim"'+(p.pendencia?' selected':'')+'>Sim</option></select><div id="pb_'+p.id+'" style="display:'+(p.pendencia?'block':'none')+'"><label>Qual é a pendência?</label><input name="pd_'+p.id+'" maxlength="200" value="'+esc(p.pendencia||'')+'"></div>'+
     '<div class="row"><div class="sp"><label>Entrada</label><input type="date" name="entrada_'+p.id+'" value="'+esc((p.criado_em||'').slice(0,10))+'"></div>'+
     '<div class="sp"><label>Previsão de entrega</label><input type="date" name="previsao_'+p.id+'" value="'+esc(p.previsao_entrega||'')+'"></div>'+
     (p.status==='Entregue'?'<div class="sp"><label>Entregue em</label><input type="datetime-local" name="entregue_'+p.id+'" value="'+dtl(p.entregue_em)+'"></div>':'')+
@@ -377,7 +416,7 @@ function vClienteForm(c){
     '<label>Nome *</label><input name="nome" required value="'+esc(novo?'':c.nome)+'">'+
     '<label>Telefone</label><input name="telefone" value="'+esc(novo?'':c.telefone)+'">'+
     '<label>Observação</label><textarea name="observacao" rows="3">'+esc(novo?'':c.observacao)+'</textarea>'+
-    '<label>🟡 Tem alguma pendência?</label><select name="pend_tem" data-chg="pendTem"><option value="nao">Não</option><option value="sim"'+(c&&c.pendencia?' selected':'')+'>Sim</option></select>'+
+    '<label><i class="dot"></i>Tem alguma pendência?</label><select name="pend_tem" data-chg="pendTem"><option value="nao">Não</option><option value="sim"'+(c&&c.pendencia?' selected':'')+'>Sim</option></select>'+
     '<div id="pendbox" style="display:'+(c&&c.pendencia?'block':'none')+'"><label>Qual é a pendência? (descreva tudo)</label><textarea name="pend_txt" rows="3">'+esc(c?c.pendencia:'')+'</textarea></div>'+
     (novo?'':'<p class="mut">Os pedidos e o histórico deste cliente são mantidos. A alteração fica registrada com o valor antigo.</p>')+'</div>'+blocos+
     '<div class="row"><button class="btn">Salvar</button><a class="btn sec" href="'+(novo?'#/clientes':'#/clientes/'+c.id)+'">Cancelar</a></div></form>';
@@ -388,14 +427,14 @@ function vClienteDetalhe(id){
   const ps=pedidosDe(id).sort((a,b)=>a.criado_em<b.criado_em?1:-1);
   const hist=DB.historico.filter(h=>h.cliente_id===c.id).sort((a,b)=>b.id-a.id);
   const abertos=ps.filter(p=>p.status!=='Entregue').length;
-  const linhas=ps.map(p=>'<tr><td>'+(p.pendencia?'<i class="dot" title="Falta: '+esc(p.pendencia)+'"></i>':'')+esc(p.item)+(p.pendencia?'<div style="color:#facc15;font-size:13px">Falta: '+esc(p.pendencia)+'</div>':'')+(p.observacao?'<ul class="mut" style="margin:4px 0 0;padding-left:18px">'+p.observacao.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</td><td>'+esc(p.tamanho)+'</td><td>'+p.quantidade+'</td><td>'+badge(p.status)+'</td><td>'+dia(p.criado_em)+'</td><td>'+previsaoHTML(p,false)+'</td><td>'+fmt(p.entregue_em)+'</td>'+
+  const linhas=ps.map(p=>'<tr><td>'+(p.pendencia?'<i class="dot" title="Falta: '+esc(p.pendencia)+'"></i>':'')+esc(p.item)+(p.pendencia?'<div style="color:var(--pend);font-size:13px">Falta: '+esc(p.pendencia)+'</div>':'')+(p.observacao?'<ul class="mut" style="margin:4px 0 0;padding-left:18px">'+p.observacao.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</td><td>'+esc(p.tamanho)+'</td><td>'+p.quantidade+'</td><td>'+badge(p.status)+'</td><td>'+dia(p.criado_em)+'</td><td>'+previsaoHTML(p,false)+'</td><td>'+fmt(p.entregue_em)+'</td>'+
     '<td><div class="row"><a class="btn sm sec" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/clientes/'+c.id)+'">Editar</a>'+
     '<select data-chg="status" data-id="'+p.id+'" style="width:auto;padding:3px">'+STATUS.map(s=>'<option'+(s===p.status?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select></div></td></tr>').join('')||'<tr><td colspan="8" class="mut">Sem pedidos.</td></tr>';
   const hl=hist.map(h=>'<tr><td style="white-space:nowrap">'+fmt(h.data)+'</td><td><b>'+esc(h.acao)+'</b><br><span class="mut">'+esc(h.detalhe)+'</span></td></tr>').join('');
   return '<div class="row"><h1 class="sp">'+esc(c.nome)+'</h1><a class="btn sec" href="#/clientes/'+c.id+'/editar">Editar cadastro</a>'+
-    '<a class="btn sec" href="#/imprimir?cliente_id='+c.id+'">🖨 Imprimir ficha</a><a class="btn" href="#/pedidos/novo?cliente_id='+c.id+'">+ Novo pedido</a>'+
-    '<button class="btn danger" data-act="apagar" data-id="'+c.id+'" title="Apagar cliente">🗑 Apagar</button></div>'+
-    '<div class="card"><b>Telefone:</b> '+esc(c.telefone||'—')+' &nbsp; <b>Cadastrado em:</b> '+fmt(c.criado_em)+(c.observacao?'<br><b>Obs.:</b> '+esc(c.observacao):'')+(c.pendencia?'<br><span style="color:#facc15;font-weight:600"><i class="dot"></i>Pendência: '+esc(c.pendencia)+'</span>':'')+'</div>'+
+    '<a class="btn sec" href="#/imprimir?cliente_id='+c.id+'">'+ICO.print+' Imprimir ficha</a><a class="btn" href="#/pedidos/novo?cliente_id='+c.id+'">+ Novo pedido</a>'+
+    '<button class="btn danger" data-act="apagar" data-id="'+c.id+'" title="Apagar cliente">'+ICO.trash+' Apagar</button></div>'+
+    '<div class="card"><b>Telefone:</b> '+esc(c.telefone||'—')+' &nbsp; <b>Cadastrado em:</b> '+fmt(c.criado_em)+(c.observacao?'<br><b>Obs.:</b> '+esc(c.observacao):'')+(c.pendencia?'<br><span style="color:var(--pend);font-weight:600"><i class="dot"></i>Pendência: '+esc(c.pendencia)+'</span>':'')+'</div>'+
     '<div class="card"><h2>Pedidos</h2><table><tr><th>Item</th><th>Tam.</th><th>Qtd.</th><th>Status</th><th>Entrada</th><th>Previsão</th><th>Entregue em</th><th></th></tr>'+linhas+'</table></div>'+
     '<div class="card"><h2>Histórico do cliente</h2><table>'+hl+'</table></div>';
 }
@@ -425,7 +464,7 @@ function vPedidoForm(p,q){
     '<div class="sp"><label>Data de retirada (previsão)</label><input type="date" name="previsao_entrega" value="'+esc(v.previsao_entrega)+'"></div></div>'+
     (novo?'<p class="mut">A data de entrada é salva automaticamente com o dia de hoje. A data de retirada pode ser alterada depois.</p>':'')+
     (!novo&&p.status==='Entregue'?'<label>Data e hora em que foi entregue ao cliente</label><input type="datetime-local" name="entregue_em" value="'+esc(v.entregue_em)+'">':'')+
-    '<label>🟡 Tem alguma pendência? Se tiver, descreva qual (deixe em branco se não)</label><input name="pendencia" maxlength="200" value="'+esc(v.pendencia||'')+'">'+
+    '<label><i class="dot"></i>Tem alguma pendência? Se tiver, descreva qual (deixe em branco se não)</label><input name="pendencia" maxlength="200" value="'+esc(v.pendencia||'')+'">'+
     '<label>Descrição / observação do pedido</label><textarea name="observacao" rows="3">'+esc(v.observacao)+'</textarea>'+
     (novo?'':'<p class="mut">Cada alteração fica registrada no histórico, com o valor antigo e o novo.</p>')+
     '<div class="row" style="margin-top:14px"><button class="btn">Salvar</button><a class="btn sec" href="#'+(voltar||(novo?'/pedidos':'/clientes/'+p.cliente_id))+'">Cancelar</a></div></form>';
@@ -441,13 +480,13 @@ function vPedidos(q){
     const c=cli(p.cliente_id)||{nome:'?',telefone:''};
     const h=norm([c.nome,c.telefone,p.item,p.tamanho,p.observacao,p.status].join(' '));
     return '<div class="item pedido" data-busca="'+esc(h)+'"><div class="row"><b style="font-size:16px">'+p.quantidade+'x '+esc(p.item)+' '+esc(p.tamanho)+'</b> '+badge(p.status)+'<span class="sp"></span>'+
-      '<span class="row noprint"><a class="btn sm sec" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/pedidos')+'">✏ Editar</a>'+btnStatus(p,'/pedidos')+'</span></div>'+
+      '<span class="row noprint"><a class="btn sm sec" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/pedidos')+'">'+ICO.edit+' Editar</a>'+btnStatus(p,'/pedidos')+'</span></div>'+
       '<div style="margin-top:4px"><a href="#/clientes/'+p.cliente_id+'"><b>'+esc(c.nome)+'</b></a> <span class="mut">'+esc(c.telefone)+'</span></div>'+
-      '<div style="margin-top:4px">'+(p.observacao?'📝 '+esc(p.observacao):'<span class="mut">📝 sem descrição</span>')+'</div>'+
+      '<div style="margin-top:4px">'+(p.observacao?ICO.note+' '+esc(p.observacao):'<span class="mut">'+ICO.note+' sem descrição</span>')+'</div>'+
       '<div class="mut" style="margin-top:4px">Entrada '+dia(p.criado_em)+' · Previsão '+(atrasado(p)?'<span class="late">'+dia(p.previsao_entrega)+' · ATRASADO</span>':dia(p.previsao_entrega))+(p.entregue_em?' · Entregue '+fmt(p.entregue_em):'')+'</div></div>';
   }).join('')||'<p class="mut">Nenhum pedido.</p>';
-  return '<div class="row noprint"><h1 class="sp">Editar pedido</h1><a class="btn" href="#/pedidos/novo">+ Novo pedido</a><button class="btn sec" data-act="imprimirPagina">🖨 Imprimir esta lista</button></div>'+
-    '<div class="card noprint"><div class="row"><input id="filtro" placeholder="🔍 Buscar por cliente, item, tamanho ou descrição" style="max-width:480px" autocomplete="off">'+
+  return '<div class="row noprint"><h1 class="sp">Editar pedido</h1><a class="btn" href="#/pedidos/novo">+ Novo pedido</a><button class="btn sec" data-act="imprimirPagina">'+ICO.print+' Imprimir esta lista</button></div>'+
+    '<div class="card noprint"><div class="row"><input id="filtro" placeholder="Buscar por cliente, item, tamanho ou descrição" style="max-width:480px" autocomplete="off">'+
     '<a class="btn sm'+(filtro?' sec':'')+'" href="#/pedidos">Todos</a>'+STATUS.map(s=>'<a class="btn sm'+(s===filtro?'':' sec')+'" href="#/pedidos?status='+encodeURIComponent(s)+'">'+esc(s)+' ('+cont[s]+')</a>').join('')+
     '<span class="mut" id="cont"></span></div></div>'+
     '<h2 class="print-only">Pedidos'+(filtro?' · '+esc(filtro):'')+' · Força Tática · '+fmt(agora())+'</h2>'+
@@ -472,7 +511,7 @@ function vImprimir(q){
     '</table></div>').join('')||'<p class="mut">Nada para imprimir.</p>';
   return '<div class="row noprint"><h1 class="sp">'+(cid?'Ficha do cliente':'Clientes e pedidos')+' · impressão</h1>'+
     (cid?'<a class="btn sec" href="#/imprimir">Ver todos os clientes</a>':'<select data-chg="imprimirFiltro" style="width:auto"><option value="">Todos os status</option>'+STATUS.map(s=>'<option'+(s===filtro?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select>')+
-    '<button class="btn" data-act="imprimirPagina">🖨 Imprimir</button></div>'+
+    '<button class="btn" data-act="imprimirPagina">'+ICO.print+' Imprimir</button></div>'+
     '<p class="mut">Força Tática · gerado em '+fmt(agora())+(filtro?' · Filtro: '+esc(filtro):'')+' · '+grupos.length+' cliente(s)</p>'+blocos;
 }
 
@@ -490,7 +529,7 @@ let ultimoPath=null;
 function parseHash(){const h=(location.hash||'#/').slice(1)||'/';const i=h.indexOf('?');return{path:i<0?h:h.slice(0,i),q:new URLSearchParams(i<0?'':h.slice(i+1))}}
 const somaDia=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 let DIA_SEL=null;
-const barraDia=()=>'<div class="noprint" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0"><button class="btn sm sec" data-act="diaAnt" title="Dia anterior">◀</button><input type="date" style="width:auto" value="'+(DIA_SEL||hoje())+'" data-chg="diaSel"><button class="btn sm sec" data-act="diaProx" title="Dia seguinte">▶</button><button class="btn sm sec" data-act="diaHoje">Hoje</button><button class="btn sm sec" data-act="imprimirPagina">🖨 Imprimir</button></div><div class="mut noprint">Escolha qualquer dia para ver os serviços dele. “Próximo serviço” mostra sempre o dia seguinte ao escolhido.</div>';
+const barraDia=()=>'<div class="noprint" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0"><button class="btn sm sec" data-act="diaAnt" title="Dia anterior">◀</button><input type="date" style="width:auto" value="'+(DIA_SEL||hoje())+'" data-chg="diaSel"><button class="btn sm sec" data-act="diaProx" title="Dia seguinte">▶</button><button class="btn sm sec" data-act="diaHoje">Hoje</button><button class="btn sm sec" data-act="imprimirPagina">'+ICO.print+' Imprimir</button></div><div class="mut noprint">Escolha qualquer dia para ver os serviços dele. “Próximo serviço” mostra sempre o dia seguinte ao escolhido.</div>';
 const doDia=iso=>DB.pedidos.filter(p=>(p.previsao_entrega||'').slice(0,10)===iso);
 function vServicos(iso,titulo,path){
   const L=doDia(iso).sort((a,b)=>a.criado_em<b.criado_em?-1:1),por={},ordem=[];
@@ -499,28 +538,28 @@ function vServicos(iso,titulo,path){
   const ext=new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
   return '<h1>'+titulo+'</h1>'+barraDia()+'<p class="mut">'+esc(ext)+' · '+L.length+' pedido(s) de '+ordem.length+' cliente(s) · data de retirada</p>'+(ordem.map(cid=>{const c=cli(cid)||{nome:'?',telefone:''},ps=por[cid];
     return '<div class="card"><div class="row" style="justify-content:space-between"><b>'+(c.pendencia||ps.some(x=>x.pendencia)?'<i class="dot"></i>':'')+'<a href="#/clientes/'+cid+'" style="color:inherit">'+esc(c.nome)+'</a></b><span class="mut">'+esc(c.telefone)+'</span></div>'+
-    (c.pendencia?'<div style="color:#facc15;font-weight:600;margin-top:6px"><i class="dot"></i>Pendência do cliente: '+esc(c.pendencia)+'</div>':'')+
+    (c.pendencia?'<div style="color:var(--pend);font-weight:600;margin-top:6px"><i class="dot"></i>Pendência do cliente: '+esc(c.pendencia)+'</div>':'')+
     ps.map(p=>'<div style="margin-top:8px;border-top:1px solid var(--line);padding-top:8px"><div>• <b>'+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho)].filter(Boolean).join(' · '))+'</b> <span class="mut">— '+esc(p.status)+'</span></div>'+
       (p.observacao?'<ul class="mut" style="margin:4px 0 0;padding-left:20px">'+p.observacao.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
-      (p.pendencia?'<div style="color:#facc15;font-weight:600"><i class="dot"></i>Falta: '+esc(p.pendencia)+'</div>':'')+
+      (p.pendencia?'<div style="color:var(--pend);font-weight:600"><i class="dot"></i>Falta: '+esc(p.pendencia)+'</div>':'')+
       '<div class="row" style="margin-top:6px">'+btnStatus(p,path)+'</div></div>').join('')+
-    '<div class="mut" style="margin-top:8px"><a href="#/clientes/'+cid+'">👁 Ver cadastro e todos os pedidos</a> · <a href="#/clientes/'+cid+'/editar">✏ Editar tudo</a></div></div>'}).join('')||'<div class="card mut">Nenhum serviço com retirada neste dia.</div>');
+    '<div class="mut" style="margin-top:8px"><a href="#/clientes/'+cid+'">'+ICO.eye+' Ver cadastro e todos os pedidos</a> · <a href="#/clientes/'+cid+'/editar">'+ICO.edit+' Editar tudo</a></div></div>'}).join('')||'<div class="card mut">Nenhum serviço com retirada neste dia.</div>');
 }
 function vPendencias(){
   const L=DB.pedidos.filter(p=>p.pendencia&&p.status!=='Entregue').sort((a,b)=>a.criado_em<b.criado_em?-1:1);
   const LC=DB.clientes.filter(c=>c.pendencia);
-  const cardCli=c=>'<div class="card"><div class="row" style="justify-content:space-between"><b><i class="dot"></i><a href="#/clientes/'+c.id+'" style="color:inherit">'+esc(c.nome)+'</a></b><span class="mut">Cliente · '+esc(c.telefone)+'</span></div><div style="color:#facc15;font-weight:600;white-space:normal;margin:6px 0">Pendência: '+esc(c.pendencia)+'</div><div class="row"><button class="btn" data-act="resolverCli" data-id="'+c.id+'">✔ Resolvido</button><a class="btn sec" href="#/clientes/'+c.id+'/editar">✏ Editar cadastro</a></div></div>';
-  return '<h1>🟡 Pendências</h1><p class="mut">Pedidos que estão faltando algo. Quando resolver, clique em “Resolvido”.</p>'+(LC.map(cardCli).join('')+L.map(p=>{const c=cli(p.cliente_id)||{nome:'?',telefone:''};
+  const cardCli=c=>'<div class="card"><div class="row" style="justify-content:space-between"><b><i class="dot"></i><a href="#/clientes/'+c.id+'" style="color:inherit">'+esc(c.nome)+'</a></b><span class="mut">Cliente · '+esc(c.telefone)+'</span></div><div style="color:var(--pend);font-weight:600;white-space:normal;margin:6px 0">Pendência: '+esc(c.pendencia)+'</div><div class="row"><button class="btn" data-act="resolverCli" data-id="'+c.id+'">'+ICO.ok+' Resolvido</button><a class="btn sec" href="#/clientes/'+c.id+'/editar">'+ICO.edit+' Editar cadastro</a></div></div>';
+  return '<h1>'+ICO.pend+' Pendências</h1><p class="mut">Pedidos que estão faltando algo. Quando resolver, clique em “Resolvido”.</p>'+(LC.map(cardCli).join('')+L.map(p=>{const c=cli(p.cliente_id)||{nome:'?',telefone:''};
     return '<div class="card"><div class="row" style="justify-content:space-between"><b><i class="dot"></i><a href="#/clientes/'+c.id+'" style="color:inherit">'+esc(c.nome)+'</a></b><span class="mut">'+esc(p.status)+'</span></div>'+
     '<div class="mut" style="margin:4px 0">'+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho),p.observacao].filter(Boolean).join(' · '))+'</div>'+
-    '<div style="color:#facc15;font-weight:600;white-space:normal">Falta: '+esc(p.pendencia)+'</div>'+
-    '<div class="row" style="margin-top:8px"><button class="btn" data-act="resolver" data-id="'+p.id+'">✔ Resolvido</button><a class="btn sec" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/pendencias')+'">✏ Editar</a></div></div>'}).join('')||'<div class="card mut">Nenhuma pendência. 👍</div>');
+    '<div style="color:var(--pend);font-weight:600;white-space:normal">Falta: '+esc(p.pendencia)+'</div>'+
+    '<div class="row" style="margin-top:8px"><button class="btn" data-act="resolver" data-id="'+p.id+'">'+ICO.ok+' Resolvido</button><a class="btn sec" href="#/pedidos/'+p.id+'/editar'+lnkVoltar('/pendencias')+'">'+ICO.edit+' Editar</a></div></div>'}).join('')||'<div class="card mut">Nenhuma pendência. 👍</div>');
 }
 function rota(path,q){
   let m;
   if(path==='/pendencias')return vPendencias();
-  if(path==='/hoje')return vServicos(DIA_SEL||hoje(),'📅 Serviços do dia','/hoje');
-  if(path==='/amanha')return vServicos(somaDia(DIA_SEL||hoje(),1),'⏭ Próximo serviço','/amanha');
+  if(path==='/hoje')return vServicos(DIA_SEL||hoje(),ICO.hoje+' Serviços do dia','/hoje');
+  if(path==='/amanha')return vServicos(somaDia(DIA_SEL||hoje(),1),ICO.amanha+' Próximo serviço','/amanha');
   if(path==='/')return vPainel();
   if(path==='/clientes')return vClientes(q);
   if(path==='/clientes/novo')return vClienteForm(null);
@@ -535,7 +574,7 @@ function rota(path,q){
 }
 function bannerHTML(){
   let b='';
-  if(memOnly)b+='<div class="card aviso noprint"><b>⚠ Sem conexão com o servidor.</b> O que você lançar agora ainda não foi salvo. Confira a internet; o sistema tenta de novo sozinho.</div>';
+  if(memOnly)b+='<div class="card aviso noprint"><b>'+ICO.warn+' Sem conexão com o servidor.</b> O que você lançar agora ainda não foi salvo. Confira a internet; o sistema tenta de novo sozinho.</div>';
   return b;
 }
 function render(){
@@ -576,7 +615,7 @@ function atualizarDica(){
 const ir=h=>{if(location.hash===h)render();else location.hash=h};
 
 /* ======================= ações ======================= */
-function erroForm(html){const e=$('#erro');e.innerHTML='<div class="card erro" style="max-width:760px"><b>⚠ '+html+'</b></div>';window.scrollTo(0,0)}
+function erroForm(html){const e=$('#erro');e.innerHTML='<div class="card erro" style="max-width:760px"><b>'+ICO.warn+' '+html+'</b></div>';window.scrollTo(0,0)}
 function mudarStatus(pid,novo,deSelect){
   const p=ped(pid);if(!p||p.status===novo)return;
   if(deSelect){if(!confirm('Alterar o status de "'+p.item+'" para "'+novo+'"?')){render();return}}
@@ -666,7 +705,7 @@ const FORMS={
     if(item==='Outro'&&clean(f.item_outro.value))item=clean(f.item_outro.value);
     let c=achaDup(nome);
     if(c&&+f.dataset.cid!==c.id){
-      const ab=pedidosDe(c.id).map(x=>'<br>• <a href="#/pedidos/'+x.id+'/editar'+lnkVoltar('/')+'">✏ Abrir pedido: '+esc((x.quantidade+'x '+x.item+' '+(x.tamanho||'')).trim())+'</a> <span class="mut">('+esc(x.status)+')</span>').join('');
+      const ab=pedidosDe(c.id).map(x=>'<br>• <a href="#/pedidos/'+x.id+'/editar'+lnkVoltar('/')+'">'+ICO.edit+' Abrir pedido: '+esc((x.quantidade+'x '+x.item+' '+(x.tamanho||'')).trim())+'</a> <span class="mut">('+esc(x.status)+')</span>').join('');
       return erroForm('Cliente já cadastrado. O pedido não foi lançado.<br>Cadastro existente: <a href="#/clientes/'+c.id+'"><b>'+esc(c.nome)+'</b></a> '+esc(c.telefone)+(ab?'<br><br>Abra o pedido dele para alterar:'+ab:'')+'<br><br><span class="mut">Ou, se for outro pedido deste cliente: <a href="#/pedidos/novo?cliente_id='+c.id+'">lançar um novo pedido para ele</a></span>');
     }
     if(c){const tel=f.telefone.value.trim();
@@ -757,7 +796,7 @@ async function entrar(){
   $('#app').innerHTML='<div class="card">Carregando dados…</div>';
   try{await baixar()}
   catch(e){
-    $('#app').innerHTML='<div class="card erro"><b>⚠ Não foi possível carregar os dados.</b><br>'+esc((e&&e.message)||e)+'<br><br>Confira a internet e se o SQL das tabelas foi executado no Supabase.<br><br><button class="btn" onclick="location.reload()">Tentar de novo</button></div>';
+    $('#app').innerHTML='<div class="card erro"><b>'+ICO.warn+' Não foi possível carregar os dados.</b><br>'+esc((e&&e.message)||e)+'<br><br>Confira a internet e se o SQL das tabelas foi executado no Supabase.<br><br><button class="btn" onclick="location.reload()">Tentar de novo</button></div>';
     $('#btn-sair').hidden=false;return;
   }
   await migrarLocal();
@@ -766,8 +805,8 @@ async function entrar(){
   if(!timer)timer=setInterval(checar,15000);
 }
 function iniciar(){
-  if(!window.supabase){$('#app').innerHTML='<div class="card erro"><b>⚠ Não foi possível carregar a biblioteca do Supabase.</b> Confira a internet e atualize a página (Ctrl+F5).</div>';return}
-  if(!/^https:\/\//.test(SUPABASE_URL)||SUPABASE_KEY.length<30){$('#app').innerHTML='<div class="card erro"><b>⚠ Falta configurar a conexão.</b> Preencha SUPABASE_URL e SUPABASE_KEY no começo do código do index.html.</div>';return}
+  if(!window.supabase){$('#app').innerHTML='<div class="card erro"><b>'+ICO.warn+' Não foi possível carregar a biblioteca do Supabase.</b> Confira a internet e atualize a página (Ctrl+F5).</div>';return}
+  if(!/^https:\/\//.test(SUPABASE_URL)||SUPABASE_KEY.length<30){$('#app').innerHTML='<div class="card erro"><b>'+ICO.warn+' Falta configurar a conexão.</b> Preencha SUPABASE_URL e SUPABASE_KEY no começo do código do index.html.</div>';return}
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT')telaLogin()});
   sb.auth.getSession().then(r=>{if(r.data&&r.data.session)entrar();else telaLogin()}).catch(()=>telaLogin('Não foi possível conectar. Confira a internet.'));
