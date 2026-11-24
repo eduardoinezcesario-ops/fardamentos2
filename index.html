@@ -498,9 +498,10 @@ function vImprimir(q){
   let cs;
   if(cid){const c=cli(cid);if(!c)return v404();cs=[c]}
   else cs=DB.clientes.slice().sort((a,b)=>norm(a.nome)<norm(b.nome)?-1:1);
-  const grupos=[];
+  const grupos=[],nq=norm(IMP_Q);
   cs.forEach(c=>{
     let ps=pedidosDe(c.id).sort((a,b)=>a.criado_em<b.criado_em?-1:1);
+    if(!cid&&nq&&norm(c.nome+' '+c.telefone).indexOf(nq)<0)return;
     if(STATUS.indexOf(filtro)>-1){ps=ps.filter(p=>p.status===filtro);if(!ps.length)return}
     grupos.push({c:c,ps:ps});
   });
@@ -508,11 +509,12 @@ function vImprimir(q){
     (g.c.observacao?'<div class="mut" style="margin-bottom:6px">Obs. do cadastro: '+esc(g.c.observacao)+'</div>':'')+
     '<table><tr><th>Pedido</th><th>Tam.</th><th>Qtd.</th><th>Descrição</th><th>Entrada</th><th>Previsão</th><th>Situação</th></tr>'+
     (g.ps.map(p=>'<tr><td><b>'+esc(p.item)+'</b></td><td>'+esc(p.tamanho)+'</td><td>'+p.quantidade+'</td><td>'+esc(p.observacao)+'</td><td>'+dia(p.criado_em)+'</td><td>'+dia(p.previsao_entrega)+'</td><td>'+badge(p.status)+(p.entregue_em?'<br><span class="mut">entregue '+fmt(p.entregue_em)+'</span>':'')+'</td></tr>').join('')||'<tr><td colspan="7" class="mut">Sem pedidos.</td></tr>')+
-    '</table></div>').join('')||'<p class="mut">Nada para imprimir.</p>';
+    '</table></div>').join('')||(nq||filtro?'<div class="card">Nenhum cliente encontrado'+(nq?' para “'+esc(IMP_Q)+'”':'')+(filtro?' na situação <b>'+esc(filtro)+'</b>':'')+'.'+(filtro&&nq?'<br><a href="#/imprimir">Buscar este nome em todas as situações</a>':'')+'</div>':'<p class="mut">Nada para imprimir.</p>');
   return '<div class="row noprint"><h1 class="sp">'+(cid?'Ficha do cliente':'Clientes e pedidos')+' · impressão</h1>'+
     (cid?'<a class="btn sec" href="#/imprimir">Ver todos os clientes</a>':'<select data-chg="imprimirFiltro" style="width:auto"><option value="">Todos os status</option>'+STATUS.map(s=>'<option'+(s===filtro?' selected':'')+'>'+esc(s)+'</option>').join('')+'</select>')+
     '<button class="btn" data-act="imprimirPagina">'+ICO.print+' Imprimir</button></div>'+
-    '<p class="mut">Força Tática · gerado em '+fmt(agora())+(filtro?' · Filtro: '+esc(filtro):'')+' · '+grupos.length+' cliente(s)</p>'+blocos;
+    (cid?'':'<div class="noprint" style="margin:0 0 12px"><input id="imp-busca" type="search" autocomplete="off" placeholder="Digite o nome ou telefone do cliente para conferir…" value="'+esc(IMP_Q)+'"></div>')+
+    '<p class="mut">Força Tática · gerado em '+fmt(agora())+(filtro?' · Filtro: '+esc(filtro):'')+(nq?' · Busca: “'+esc(IMP_Q)+'”':'')+' · '+grupos.length+' cliente(s)</p>'+blocos;
 }
 
 function vHistorico(){
@@ -528,7 +530,7 @@ function v404(){return '<div class="card"><h1>Não encontrado</h1><p>Esse cadast
 let ultimoPath=null;
 function parseHash(){const h=(location.hash||'#/').slice(1)||'/';const i=h.indexOf('?');return{path:i<0?h:h.slice(0,i),q:new URLSearchParams(i<0?'':h.slice(i+1))}}
 const somaDia=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
-let DIA_SEL=null;
+let DIA_SEL=null,IMP_Q='';
 const barraDia=()=>'<div class="noprint" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0"><button class="btn sm sec" data-act="diaAnt" title="Dia anterior">◀</button><input type="date" style="width:auto" value="'+(DIA_SEL||hoje())+'" data-chg="diaSel"><button class="btn sm sec" data-act="diaProx" title="Dia seguinte">▶</button><button class="btn sm sec" data-act="diaHoje">Hoje</button><button class="btn sm sec" data-act="imprimirPagina">'+ICO.print+' Imprimir</button></div><div class="mut noprint">Escolha qualquer dia para ver os serviços dele. “Próximo serviço” mostra sempre o dia seguinte ao escolhido.</div>';
 const doDia=iso=>DB.pedidos.filter(p=>(p.previsao_entrega||'').slice(0,10)===iso);
 function vServicos(iso,titulo,path){
@@ -741,10 +743,10 @@ document.addEventListener('change',e=>{
   const t=e.target;
   if(t.dataset&&t.dataset.chg&&CHG[t.dataset.chg])CHG[t.dataset.chg](t);
 });
-document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.inp==='dica')atualizarDica();if(e.target.closest&&e.target.closest('form[data-form]'))formSujo=true});
+document.addEventListener('input',e=>{if(e.target.id==='imp-busca'){IMP_Q=e.target.value;render();const i=$('#imp-busca');if(i){i.focus();const n=i.value.length;i.setSelectionRange(n,n)}return}if(e.target.dataset&&e.target.dataset.inp==='dica')atualizarDica();if(e.target.closest&&e.target.closest('form[data-form]'))formSujo=true});
 document.addEventListener('submit',e=>{const f=e.target;if(f.dataset&&FORMS[f.dataset.form]){e.preventDefault();FORMS[f.dataset.form](f)}});
 document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.k){if(d.open)ABERTOS.add(d.dataset.k);else ABERTOS.delete(d.dataset.k)}},true);
-window.addEventListener('hashchange',()=>{if(!/[?&]q=/.test(location.hash)){const b=$('#busca-topo'),sg=$('#sug');if(b)b.value='';if(sg){sg.hidden=true;sg.innerHTML=''}}render()});
+window.addEventListener('hashchange',()=>{if(!/^#\/imprimir/.test(location.hash))IMP_Q='';if(!/[?&]q=/.test(location.hash)){const b=$('#busca-topo'),sg=$('#sug');if(b)b.value='';if(sg){sg.hidden=true;sg.innerHTML=''}}render()});
 $('#btn-tema').addEventListener('click',()=>{
   const h=document.documentElement,n=h.getAttribute('data-tema')==='claro'?'escuro':'claro';
   h.setAttribute('data-tema',n);try{localStorage.setItem('tema',n)}catch(e){}
