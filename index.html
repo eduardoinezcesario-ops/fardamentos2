@@ -547,14 +547,14 @@ let ultimoPath=null;
 function parseHash(){const h=(location.hash||'#/').slice(1)||'/';const i=h.indexOf('?');return{path:i<0?h:h.slice(0,i),q:new URLSearchParams(i<0?'':h.slice(i+1))}}
 const somaDia=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 let DIA_SEL=null,IMP_Q='';
-const barraDia=()=>'<div class="noprint" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0"><button class="btn sm sec" data-act="diaAnt" title="Dia anterior">◀</button><input type="date" style="width:auto" value="'+(DIA_SEL||hoje())+'" data-chg="diaSel"><button class="btn sm sec" data-act="diaProx" title="Dia seguinte">▶</button><button class="btn sm sec" data-act="diaHoje">Hoje</button><button class="btn sm sec" data-act="imprimirPagina">'+ICO.print+' Imprimir</button></div><div class="mut noprint">Escolha qualquer dia para ver os serviços dele. “Próximo serviço” mostra sempre o dia seguinte ao escolhido.</div>';
+const barraDia=(iso,off)=>'<div class="noprint" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0"><button class="btn sm sec" data-act="diaAnt" title="Dia anterior">◀</button><input type="date" style="width:auto" value="'+iso+'" data-off="'+off+'" data-chg="diaSel"><button class="btn sm sec" data-act="diaProx" title="Dia seguinte">▶</button><button class="btn sm sec" data-act="diaHoje">Hoje</button><button class="btn sm sec" data-act="imprimirPagina">'+ICO.print+' Imprimir</button></div><div class="mut noprint">Escolha o dia no calendário ou use as setas ◀ ▶. A lista abaixo é sempre do dia que está no campo.</div>';
 const doDia=iso=>DB.pedidos.filter(p=>(p.previsao_entrega||'').slice(0,10)===iso);
 function vServicos(iso,titulo,path){
   const L=doDia(iso).sort((a,b)=>a.criado_em<b.criado_em?-1:1),por={},ordem=[];
   L.forEach(p=>{if(!por[p.cliente_id]){por[p.cliente_id]=[];ordem.push(p.cliente_id)}por[p.cliente_id].push(p)});
   ordem.sort((a,b)=>((cli(a)||{}).nome||'').localeCompare((cli(b)||{}).nome||''));
   const ext=new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
-  return '<h1>'+titulo+'</h1>'+barraDia()+'<p class="mut">'+esc(ext)+' · '+L.length+' pedido(s) de '+ordem.length+' cliente(s) · data de retirada</p>'+(ordem.map(cid=>{const c=cli(cid)||{nome:'?',telefone:''},ps=por[cid];
+  return '<h1>'+titulo+'</h1>'+barraDia(iso,path==='/amanha'?1:0)+'<p class="mut">'+esc(ext)+' · '+L.length+' pedido(s) de '+ordem.length+' cliente(s) · data de retirada</p>'+(ordem.map(cid=>{const c=cli(cid)||{nome:'?',telefone:''},ps=por[cid];
     return '<div class="card"><div class="row" style="justify-content:space-between"><b>'+(c.pendencia||ps.some(x=>x.pendencia)?'<i class="dot"></i>':'')+'<a href="#/clientes/'+cid+'" style="color:inherit">'+esc(c.nome)+'</a></b><span class="mut">'+esc(c.telefone)+'</span></div>'+
     (c.pendencia?'<div style="color:var(--pend);font-weight:600;margin-top:6px"><i class="dot"></i>Pendência do cliente: '+esc(c.pendencia)+'</div>':'')+
     ps.map(p=>'<div style="margin-top:8px;border-top:1px solid var(--line);padding-top:8px"><div>• <b>'+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho)].filter(Boolean).join(' · '))+'</b> <span class="mut">— '+esc(p.status)+'</span></div>'+
@@ -667,7 +667,7 @@ const ACTS={
   imprimirPagina:()=>window.print()
 };
 const CHG={
-  diaSel:t=>{DIA_SEL=t.value&&t.value!==hoje()?t.value:null;render()},
+  diaSel:t=>{const b=t.value?somaDia(t.value,-(+t.dataset.off||0)):'';DIA_SEL=b&&b!==hoje()?b:null;render()},
   pendTem:t=>{$('#'+(t.dataset.box||'pendbox')).style.display=t.value==='sim'?'block':'none'},
   status:t=>{mudarStatus(+t.dataset.id,t.value,true);render()},
   itemSel:t=>{$('#outro').style.display=t.value==='Outro'?'block':'none'},
