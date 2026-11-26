@@ -137,10 +137,14 @@ tbody tr:hover td{background:var(--item)}
 details.grp{border-radius:12px}details.grp>summary{padding:12px 14px;border-radius:12px}details.grp>summary:hover{background:var(--card)}
 .sug{border-radius:12px}a{text-underline-offset:3px}
 ::selection{background:rgba(99,102,241,.35)}*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+header nav a[data-nav="/categoria"]{--c:#0891b2}
+.chipcat{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+.chipcat span{background:var(--item);border-radius:99px;padding:0 7px;font-size:11px;color:var(--mut)}
+.chipcat:hover{border-color:var(--pri)}.chipcat.on{background:var(--pri);color:#fff;border-color:var(--pri)}.chipcat.on span{background:rgba(255,255,255,.25);color:#fff}
 /* menu em caixinhas coloridas */
 .hnw{background:rgba(0,0,0,.2)}
-header nav{gap:5px;padding:9px 0}
-header nav a{--c:#475569;background:var(--c);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:10px;padding:7px 9px;font-size:12.5px;font-weight:600;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:filter .15s,transform .05s;flex:none}
+header nav{gap:4px;padding:9px 0}
+header nav a{--c:#475569;background:var(--c);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:10px;padding:7px 8px;font-size:12.5px;font-weight:600;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:filter .15s,transform .05s;flex:none}
 header nav a .ic{width:14px;height:14px}
 header nav a:hover{background:var(--c);filter:brightness(1.12);color:#fff;border-color:rgba(255,255,255,.45)}
 header nav a.on{background:var(--c);color:#fff;border-color:#fff;box-shadow:0 0 0 2px #fff,0 4px 12px rgba(0,0,0,.4);transform:translateY(-1px)}
@@ -174,6 +178,7 @@ try{var _t=localStorage.getItem('tema');if(_t)document.documentElement.setAttrib
       <a href="#/hoje" data-nav="/hoje"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>Serviços do dia<span id="nhoje"></span></a>
       <a href="#/amanha" data-nav="/amanha"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 16h8m-3-3 3 3-3 3"/></svg>Próximo serviço<span id="namanha"></span></a>
       <a href="#/clientes" data-nav="/clientes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</a>
+      <a href="#/categoria" data-nav="/categoria"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Por categoria</a>
       <a href="#/pedidos" data-nav="/pedidos"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Editar pedido</a>
       <a href="#/pendencias" data-nav="/pendencias"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Pendências<span id="npend"></span></a>
       <a href="#/imprimir" data-nav="/imprimir"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>Imprimir lista</a>
@@ -214,6 +219,7 @@ const MAX_SNAP=10;
 const $=s=>document.querySelector(s);
 const IC=d=>'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+d+'</svg>';
 const ICO={
+tag:IC('<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>'),
 print:IC('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>'),
 eye:IC('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>'),
 edit:IC('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>'),
@@ -546,7 +552,7 @@ function v404(){return '<div class="card"><h1>Não encontrado</h1><p>Esse cadast
 let ultimoPath=null;
 function parseHash(){const h=(location.hash||'#/').slice(1)||'/';const i=h.indexOf('?');return{path:i<0?h:h.slice(0,i),q:new URLSearchParams(i<0?'':h.slice(i+1))}}
 const somaDia=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
-let DIA_SEL=null,IMP_Q='';
+let DIA_SEL=null,IMP_Q='',CAT_Q='',CAT_ST='';
 const barraDia=(iso,off)=>'<div class="noprint" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0"><button class="btn sm sec" data-act="diaAnt" title="Dia anterior">◀</button><input type="date" style="width:auto" value="'+iso+'" data-off="'+off+'" data-chg="diaSel"><button class="btn sm sec" data-act="diaProx" title="Dia seguinte">▶</button><button class="btn sm sec" data-act="diaHoje">Hoje</button><button class="btn sm sec" data-act="imprimirPagina">'+ICO.print+' Imprimir</button></div><div class="mut noprint">Escolha o dia no calendário ou use as setas ◀ ▶. A lista abaixo é sempre do dia que está no campo.</div>';
 const doDia=iso=>DB.pedidos.filter(p=>(p.previsao_entrega||'').slice(0,10)===iso);
 function vServicos(iso,titulo,path){
@@ -563,6 +569,25 @@ function vServicos(iso,titulo,path){
       '<div class="row" style="margin-top:6px">'+btnStatus(p,path)+'</div></div>').join('')+
     '<div class="mut" style="margin-top:8px"><a href="#/clientes/'+cid+'">'+ICO.eye+' Ver cadastro e todos os pedidos</a> · <a href="#/clientes/'+cid+'/editar">'+ICO.edit+' Editar tudo</a></div></div>'}).join('')||'<div class="card mut">Nenhum serviço com retirada neste dia.</div>');
 }
+function vCategoria(){
+  const nq=norm(CAT_Q),cont={};
+  DB.pedidos.forEach(p=>{const k=norm(p.item);if(!k)return;const o=cont[k]=cont[k]||{n:0,nm:{}};o.n++;o.nm[p.item]=(o.nm[p.item]||0)+1});
+  const cats=Object.keys(cont).map(k=>({k:k,n:cont[k].n,nome:Object.keys(cont[k].nm).sort((a,b)=>cont[k].nm[b]-cont[k].nm[a])[0]})).sort((a,b)=>b.n-a.n||a.nome.localeCompare(b.nome));
+  const L=(nq||CAT_ST)?DB.pedidos.filter(p=>(!nq||norm(String(p.item||'')+' '+String(p.observacao||'')).indexOf(nq)>-1)&&(!CAT_ST||p.status===CAT_ST)):[];
+  const g={},ord=[];L.slice().sort((a,b)=>a.criado_em<b.criado_em?1:-1).forEach(p=>{if(!g[p.cliente_id]){g[p.cliente_id]=[];ord.push(p.cliente_id)}g[p.cliente_id].push(p)});
+  ord.sort((a,b)=>((cli(a)||{}).nome||'').localeCompare((cli(b)||{}).nome||''));
+  const cards=ord.map(cid=>{const c=cli(cid)||{nome:'?',telefone:''},ps=g[cid];
+    return '<div class="card"><div class="row" style="justify-content:space-between"><b>'+(c.pendencia||ps.some(x=>x.pendencia)?'<i class="dot"></i>':'')+'<a href="#/clientes/'+cid+'" style="color:inherit">'+esc(c.nome)+'</a></b><span class="mut">'+esc(c.telefone)+'</span></div>'+
+    ps.map(p=>'<div style="margin-top:8px;border-top:1px solid var(--line);padding-top:8px"><div><b>'+esc([p.quantidade+'x '+p.item,p.tamanho&&('tam. '+p.tamanho)].filter(Boolean).join(' · '))+'</b> '+badge(p.status)+'</div>'+
+      (p.observacao?'<ul class="mut" style="margin:4px 0 0;padding-left:18px">'+p.observacao.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
+      (p.pendencia?'<div style="color:var(--pend);font-weight:600"><i class="dot"></i>Falta: '+esc(p.pendencia)+'</div>':'')+
+      '<div class="mut">entrada '+dia(p.criado_em)+' · retirada '+dia(p.previsao_entrega)+'</div></div>').join('')+
+    '<div style="margin-top:8px"><a href="#/clientes/'+cid+'">'+ICO.eye+' Ver cadastro e todos os pedidos</a></div></div>'}).join('');
+  return '<h1>'+ICO.tag+' Por categoria</h1><p class="mut">Procure pelo tipo de item (ex.: Gandola, Boina, Camiseta) ou por uma palavra da descrição (ex.: acrílica). Não precisa saber o nome do cliente.</p>'+
+   '<div class="noprint" style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0"><input id="cat-busca" type="search" autocomplete="off" placeholder="Digite a categoria ou uma palavra da descrição…" value="'+esc(CAT_Q)+'" style="flex:1 1 260px;width:auto"><select data-chg="catStatus" style="width:auto"><option value="">Todos os status</option>'+STATUS.map(x=>'<option'+(CAT_ST===x?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select><button class="btn sm sec" data-act="catLimpar">Limpar</button></div>'+
+   '<div class="noprint" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">'+(cats.map(c=>'<button class="chipcat'+(nq===c.k?' on':'')+'" data-act="catSel" data-q="'+esc(c.nome)+'">'+esc(c.nome)+' <span>'+c.n+'</span></button>').join('')||'<span class="mut">Ainda não há pedidos.</span>')+'</div>'+
+   ((nq||CAT_ST)?'<p class="mut"><b>'+L.length+'</b> pedido(s) · <b>'+ord.length+'</b> cliente(s)'+(nq?' · Busca: “'+esc(CAT_Q)+'”':'')+(CAT_ST?' · '+esc(CAT_ST):'')+'</p>'+(cards||'<div class="card mut">Nenhum pedido encontrado.</div>'):'<div class="card mut">Escolha uma categoria acima ou digite no campo para ver os pedidos.</div>');
+}
 function vPendencias(){
   const L=DB.pedidos.filter(p=>p.pendencia&&p.status!=='Entregue').sort((a,b)=>a.criado_em<b.criado_em?-1:1);
   const LC=DB.clientes.filter(c=>c.pendencia);
@@ -576,6 +601,7 @@ function vPendencias(){
 function rota(path,q){
   let m;
   if(path==='/pendencias')return vPendencias();
+  if(path==='/categoria')return vCategoria();
   if(path==='/hoje')return vServicos(DIA_SEL||hoje(),ICO.hoje+' Serviços do dia','/hoje');
   if(path==='/amanha')return vServicos(somaDia(DIA_SEL||hoje(),1),ICO.amanha+' Próximo serviço','/amanha');
   if(path==='/')return vPainel();
@@ -657,6 +683,8 @@ function apagarCliente(id){
 }
 
 const ACTS={
+  catSel:t=>{CAT_Q=t.dataset.q;render()},
+  catLimpar:()=>{CAT_Q='';CAT_ST='';render()},
   resolverCli:t=>{const c=cli(+t.dataset.id);if(!c)return;log('Pendência resolvida','Faltava: '+c.pendencia,c.id,null);c.pendencia='';salvar();render()},
   resolver:t=>{const p=ped(+t.dataset.id);if(!p)return;log('Pendência resolvida','Faltava: '+p.pendencia,p.cliente_id,p.id);p.pendencia='';p.atualizado_em=agora();salvar();render()},
   status:t=>{mudarStatus(+t.dataset.id,t.dataset.to,false);const v=safeVoltar(t.dataset.volta);if(v)ir('#'+v);else render()},
@@ -667,6 +695,7 @@ const ACTS={
   imprimirPagina:()=>window.print()
 };
 const CHG={
+  catStatus:t=>{CAT_ST=t.value;render()},
   diaSel:t=>{const b=t.value?somaDia(t.value,-(+t.dataset.off||0)):'';DIA_SEL=b&&b!==hoje()?b:null;render()},
   pendTem:t=>{$('#'+(t.dataset.box||'pendbox')).style.display=t.value==='sim'?'block':'none'},
   status:t=>{mudarStatus(+t.dataset.id,t.value,true);render()},
@@ -759,10 +788,10 @@ document.addEventListener('change',e=>{
   const t=e.target;
   if(t.dataset&&t.dataset.chg&&CHG[t.dataset.chg])CHG[t.dataset.chg](t);
 });
-document.addEventListener('input',e=>{if(e.target.id==='imp-busca'){IMP_Q=e.target.value;render();const i=$('#imp-busca');if(i){i.focus();const n=i.value.length;i.setSelectionRange(n,n)}return}if(e.target.dataset&&e.target.dataset.inp==='dica')atualizarDica();if(e.target.closest&&e.target.closest('form[data-form]'))formSujo=true});
+document.addEventListener('input',e=>{if(e.target.id==='cat-busca'){CAT_Q=e.target.value;render();const i=$('#cat-busca');if(i){i.focus();const n=i.value.length;i.setSelectionRange(n,n)}return}if(e.target.id==='imp-busca'){IMP_Q=e.target.value;render();const i=$('#imp-busca');if(i){i.focus();const n=i.value.length;i.setSelectionRange(n,n)}return}if(e.target.dataset&&e.target.dataset.inp==='dica')atualizarDica();if(e.target.closest&&e.target.closest('form[data-form]'))formSujo=true});
 document.addEventListener('submit',e=>{const f=e.target;if(f.dataset&&FORMS[f.dataset.form]){e.preventDefault();FORMS[f.dataset.form](f)}});
 document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.k){if(d.open)ABERTOS.add(d.dataset.k);else ABERTOS.delete(d.dataset.k)}},true);
-window.addEventListener('hashchange',()=>{if(!/^#\/imprimir/.test(location.hash))IMP_Q='';if(!/[?&]q=/.test(location.hash)){const b=$('#busca-topo'),sg=$('#sug');if(b)b.value='';if(sg){sg.hidden=true;sg.innerHTML=''}}render()});
+window.addEventListener('hashchange',()=>{if(!/^#\/imprimir/.test(location.hash))IMP_Q='';if(!/^#\/categoria/.test(location.hash)){CAT_Q='';CAT_ST=''}if(!/[?&]q=/.test(location.hash)){const b=$('#busca-topo'),sg=$('#sug');if(b)b.value='';if(sg){sg.hidden=true;sg.innerHTML=''}}render()});
 $('#btn-tema').addEventListener('click',()=>{
   const h=document.documentElement,n=h.getAttribute('data-tema')==='claro'?'escuro':'claro';
   h.setAttribute('data-tema',n);try{localStorage.setItem('tema',n)}catch(e){}
